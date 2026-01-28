@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: 'postgres:16-alpine'
+    container_name: djaj-bladi-postgres
+    environment:
+      - 'POSTGRES_DB=djaj_bladi'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - djaj-bladi-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: 'dpage/pgadmin4:latest'
+    container_name: djaj-bladi-pgadmin
+    environment:
+      - 'PGADMIN_DEFAULT_EMAIL=admin@djajbladi.com'
+      - 'PGADMIN_DEFAULT_PASSWORD=admin'
+      - 'PGADMIN_CONFIG_SERVER_MODE=False'
+    ports:
+      - '5050:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - djaj-bladi-network
+    depends_on:
+      - postgres
+
+  redis:
+    image: 'redis:7-alpine'
+    container_name: djaj-bladi-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - djaj-bladi-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  djaj-bladi-network:
+    driver: bridge
