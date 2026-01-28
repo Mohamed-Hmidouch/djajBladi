@@ -1,0 +1,27 @@
+# Spring Boot Best Practices - TOUJOURS ACTIF
+
+# Applique automatiquement ces règles à TOUT code Spring Boot
+
+## Règles Critiques
+
+### JPA - TOUJOURS LAZY
+✅ @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+❌ @OneToMany  # EAGER par défaut → N+1 !
+
+### Transactions - TOUJOURS
+✅ @Service
+✅ @Transactional(readOnly = true)
+
+### Security - JAMAIS include: "*"
+✅ include: "health,info"
+
+### SQL - TOUJOURS paramétré
+✅ @Query("SELECT u FROM User u WHERE u.email = :email")
+
+### Config - TOUJOURS externalisée
+✅ url: ${DATABASE_URL}
+
+### API - TOUJOURS @RestControllerAdvice
+✅ Global exception handling obligatoire
+
+Règles complètes : .claude-skills/spring-boot-best-practices/rules/
