@@ -55,12 +55,13 @@ public class SecurityConfig {
     }
 
     /**
-     * ✅ CORS Configuration pour Next.js (port 3000)
+     * ✅ CORS: Vercel frontend + localhost for dev
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
+            "https://djaj-bladi.vercel.app",
             "http://localhost:3000",
             "http://127.0.0.1:3000"
         ));

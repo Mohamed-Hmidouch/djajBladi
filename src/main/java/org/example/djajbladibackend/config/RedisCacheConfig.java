@@ -12,6 +12,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.time.Duration;
@@ -21,8 +22,10 @@ import java.util.Map;
 /**
  * Redis cache configuration.
  * First request hits the backend; subsequent requests with same key are served from Redis.
+ * Disabled when profile "noredis" is active (use SimpleCacheConfig instead).
  */
 @Configuration
+@Profile("!noredis")
 public class RedisCacheConfig {
 
     public static final String CACHE_USERS = "users";

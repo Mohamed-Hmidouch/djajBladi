@@ -2,7 +2,7 @@
 
 ## Run with Docker (one instance, no external DB)
 
-App + Postgres + Redis run together in one compose stack. The app uses the **postgres** and **redis** services from the same compose—no `DATABASE_URL` or Redis URL to configure.
+App + Postgres + Redis run together; no separate DB hosting.
 
 ```bash
 # Build and run app, Postgres, Redis
@@ -20,6 +20,20 @@ docker compose up -d --build
 ```
 
 For production, use strong passwords and consider removing `ports` for `postgres` and `redis` in `compose.yaml` so only the app (8081) is exposed.
+
+## Deploy on Koyeb (prod)
+
+Without Redis on Koyeb, use profile **noredis** (in-memory cache). Set these **environment variables** in Koyeb:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SPRING_PROFILES_ACTIVE` | ✅ | `noredis` |
+| `JWT_SECRET` | ✅ | e.g. `openssl rand -hex 64` |
+| `DATABASE_URL` or `SPRING_DATASOURCE_URL` | ✅ | Neon JDBC URL (`jdbc:postgresql://...?sslmode=require`) |
+| `SPRING_DATASOURCE_USERNAME` | If not in URL | Neon user |
+| `SPRING_DATASOURCE_PASSWORD` | If not in URL | Neon password |
+
+**Neon:** If you see `relation "users" does not exist`, use the **direct** DB URL (not the `-pooler` one) for `DATABASE_URL` so Flyway can run DDL. Then redeploy.
 
 ## Security
 
