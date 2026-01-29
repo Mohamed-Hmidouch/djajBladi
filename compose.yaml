@@ -1,13 +1,36 @@
 services:
+  app:
+    build: .
+    container_name: djaj-bladi-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/djaj_bladi
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SERVER_PORT: "8081"
+      SPRING_DOCKER_COMPOSE_SKIP: "true"
+      SPRING_DEVTOOLS_RESTART_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-openssl-rand-hex-64}
+    ports:
+      - "8081:8081"
+    networks:
+      - djaj-bladi-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
-    image: 'postgres:16-alpine'
+    image: postgres:16-alpine
     container_name: djaj-bladi-postgres
     environment:
-      - 'POSTGRES_DB=djaj_bladi'
-      - 'POSTGRES_PASSWORD=postgres'
-      - 'POSTGRES_USER=postgres'
+      POSTGRES_DB: djaj_bladi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -18,27 +41,11 @@ services:
       timeout: 5s
       retries: 5
 
-  pgadmin:
-    image: 'dpage/pgadmin4:latest'
-    container_name: djaj-bladi-pgadmin
-    environment:
-      - 'PGADMIN_DEFAULT_EMAIL=admin@djajbladi.com'
-      - 'PGADMIN_DEFAULT_PASSWORD=admin'
-      - 'PGADMIN_CONFIG_SERVER_MODE=False'
-    ports:
-      - '5050:80'
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - djaj-bladi-network
-    depends_on:
-      - postgres
-
   redis:
-    image: 'redis:7-alpine'
+    image: redis:7-alpine
     container_name: djaj-bladi-redis
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -50,12 +57,30 @@ services:
       retries: 5
     command: redis-server --appendonly yes
 
+  pgadmin:
+    profiles:
+      - admin
+    image: dpage/pgadmin4:latest
+    container_name: djaj-bladi-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - djaj-bladi-network
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
     driver: local
-  pgadmin_data:
-    driver: local
   redis_data:
+    driver: local
+  pgadmin_data:
     driver: local
 
 networks:

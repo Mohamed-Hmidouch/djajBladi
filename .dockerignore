@@ -1,0 +1,17 @@
+.git
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+target
+*.sh
+.idea
+.vscode
+.cursorrules
+.claude-skills
+.claude.json
+**/node_modules
+**/__pycache__
+*.log
+.DS_Store

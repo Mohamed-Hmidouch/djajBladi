@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.*;
 /**
  * Controller pour l'authentification (login, register)
  * ✅ Spring Boot Best Practice: @RestController avec Service layer
+ * ✅ CORS géré globalement dans SecurityConfig
  */
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
     private final AuthService authService;
