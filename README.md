@@ -33,7 +33,13 @@ The app defaults to **noredis** (in-memory cache) when `SPRING_PROFILES_ACTIVE` 
 | `SPRING_DATASOURCE_PASSWORD` | If not in URL | Neon password |
 | `SPRING_PROFILES_ACTIVE` | No | Defaults to `noredis`; only set if you use Redis (e.g. `default`). |
 
-**Neon:** If you see `relation "users" does not exist`, use the **direct** DB URL (not the `-pooler` one) for `DATABASE_URL` so Flyway can run DDL. Then redeploy.
+**Neon & Flyway (why "relation users does not exist"):** Neon’s **pooler** (PgBouncer) breaks schema migrations (advisory locks, DDL). Use a **direct** connection for Flyway:
+
+- **Option A:** Set `DATABASE_URL` / `SPRING_DATASOURCE_URL` to the **direct** URL (disable "Connection pooling" in Neon Connect modal). Same URL for app and Flyway.
+- **Option B:** Keep a **pooler** URL for the app. We auto-derive a **direct** URL for Flyway by turning `-pooler.` into `.` in the host (e.g. `ep-xxx-pooler.region.aws.neon.tech` → `ep-xxx.region.aws.neon.tech`). No extra env vars.
+- **Option C:** Set `FLYWAY_URL` (and optionally `FLYWAY_USER`, `FLYWAY_PASSWORD`) to the direct Neon URL. Flyway uses that; the app keeps using `DATABASE_URL` / `SPRING_DATASOURCE_URL`.
+
+Then redeploy.
 
 ## Security
 
