@@ -4,8 +4,11 @@ import org.example.djajbladibackend.dto.auth.JwtResponse;
 import org.example.djajbladibackend.dto.auth.LoginRequest;
 import org.example.djajbladibackend.dto.auth.RegisterRequest;
 import org.example.djajbladibackend.dto.user.UserResponse;
+import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
+import org.example.djajbladibackend.exception.RegistrationNotAllowedException;
 import org.example.djajbladibackend.factory.UserFactory;
 import org.example.djajbladibackend.models.User;
+import org.example.djajbladibackend.models.enums.RoleEnum;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.example.djajbladibackend.security.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -80,16 +83,22 @@ public class AuthService {
     @Transactional
     @CacheEvict(cacheNames = { CACHE_USERS, CACHE_EMAIL_EXISTS }, key = "#registerRequest.email")
     public UserResponse register(RegisterRequest registerRequest) {
+        RoleEnum role = registerRequest.getRole() != null ? registerRequest.getRole() : RoleEnum.Client;
+        if (role != RoleEnum.Client) {
+            throw new RegistrationNotAllowedException(
+                "Only Client role can self-register. Admin, Ouvrier and Veterinaire are created by an admin."
+            );
+        }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        // ✅ Utiliser UserFactory pour créer l'utilisateur
+        // ✅ Utiliser UserFactory pour créer l'utilisateur (always Client)
         User user = userFactory.createUser(
                 registerRequest.getFirstName() + " " + registerRequest.getLastName(),
                 registerRequest.getEmail(),
                 registerRequest.getPassword(),
-                registerRequest.getRole()
+                role
         );
 
         if (registerRequest.getPhoneNumber() != null) {

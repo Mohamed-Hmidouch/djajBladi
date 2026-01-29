@@ -4,6 +4,8 @@ import org.example.djajbladibackend.dto.auth.JwtResponse;
 import org.example.djajbladibackend.dto.auth.LoginRequest;
 import org.example.djajbladibackend.dto.auth.RegisterRequest;
 import org.example.djajbladibackend.dto.user.UserResponse;
+import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
+import org.example.djajbladibackend.exception.RegistrationNotAllowedException;
 import org.example.djajbladibackend.factory.UserFactory;
 import org.example.djajbladibackend.models.enums.RoleEnum;
 import org.example.djajbladibackend.models.User;
@@ -55,12 +57,12 @@ class AuthServiceTest {
     private AuthService authService;
 
     private User testUser;
+    private User clientUser;
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
 
     @BeforeEach
     void setUp() {
-        // Setup test data
         testUser = User.builder()
                 .id(1L)
                 .fullName("Test User")
@@ -73,13 +75,25 @@ class AuthServiceTest {
                 .updatedAt(Instant.now())
                 .build();
 
+        clientUser = User.builder()
+                .id(2L)
+                .fullName("Client User")
+                .email("client@djajbladi.com")
+                .passwordHash("$2a$10$hashedPassword")
+                .phoneNumber("+212600000002")
+                .role(RoleEnum.Client)
+                .isActive(true)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
         registerRequest = new RegisterRequest();
         registerRequest.setFirstName("Test");
         registerRequest.setLastName("User");
         registerRequest.setEmail("test@djajbladi.com");
         registerRequest.setPassword("Test@123");
         registerRequest.setPhoneNumber("+212600000001");
-        registerRequest.setRole(RoleEnum.Admin);
+        registerRequest.setRole(RoleEnum.Client);
 
         loginRequest = new LoginRequest();
         loginRequest.setEmail("test@djajbladi.com");
@@ -130,24 +144,22 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("✅ Register should create new user when email doesn't exist")
+    @DisplayName("✅ Register should create new user when email doesn't exist (non-Admin role)")
     void testRegister_Success() {
-        // Given
+        registerRequest.setEmail("client@djajbladi.com");
         when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(false);
         when(userFactory.createUser(anyString(), anyString(), anyString(), any(RoleEnum.class)))
-                .thenReturn(testUser);
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+                .thenReturn(clientUser);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        // When
         UserResponse response = authService.register(registerRequest);
 
-        // Then
         assertNotNull(response);
-        assertEquals(1L, response.getId());
-        assertEquals("Test User", response.getFullName());
-        assertEquals("test@djajbladi.com", response.getEmail());
-        assertEquals("+212600000001", response.getPhoneNumber());
-        assertEquals(RoleEnum.Admin, response.getRole());
+        assertEquals(2L, response.getId());
+        assertEquals("Client User", response.getFullName());
+        assertEquals("client@djajbladi.com", response.getEmail());
+        assertEquals(registerRequest.getPhoneNumber(), response.getPhoneNumber());
+        assertEquals(RoleEnum.Client, response.getRole());
         assertTrue(response.getIsActive());
 
         verify(userRepository, times(1)).existsByEmail(registerRequest.getEmail());
@@ -158,16 +170,56 @@ class AuthServiceTest {
     @Test
     @DisplayName("❌ Register should throw exception when email already exists")
     void testRegister_EmailExists() {
-        // Given
         when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(true);
 
-        // When & Then
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            authService.register(registerRequest);
-        });
+        EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class, () ->
+                authService.register(registerRequest));
 
         assertEquals("Email already exists", exception.getMessage());
         verify(userRepository, times(1)).existsByEmail(registerRequest.getEmail());
+        verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("❌ Register should throw RegistrationNotAllowedException when role is Admin")
+    void testRegister_Admin_ThrowsRegistrationNotAllowed() {
+        registerRequest.setRole(RoleEnum.Admin);
+
+        RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
+                authService.register(registerRequest));
+
+        assertTrue(exception.getMessage().contains("Admin"));
+        assertTrue(exception.getMessage().contains("Client"));
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("❌ Register should throw RegistrationNotAllowedException when role is Ouvrier")
+    void testRegister_Ouvrier_ThrowsRegistrationNotAllowed() {
+        registerRequest.setRole(RoleEnum.Ouvrier);
+
+        RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
+                authService.register(registerRequest));
+
+        assertTrue(exception.getMessage().contains("Ouvrier"));
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("❌ Register should throw RegistrationNotAllowedException when role is Veterinaire")
+    void testRegister_Veterinaire_ThrowsRegistrationNotAllowed() {
+        registerRequest.setRole(RoleEnum.Veterinaire);
+
+        RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
+                authService.register(registerRequest));
+
+        assertTrue(exception.getMessage().contains("Veterinaire"));
+        verify(userRepository, never()).existsByEmail(anyString());
         verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
         verify(userRepository, never()).save(any(User.class));
     }

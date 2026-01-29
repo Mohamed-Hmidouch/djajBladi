@@ -6,6 +6,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,7 +22,8 @@ import java.util.Objects;
         @Index(name = "idx_batch_number", columnList = "batch_number"),
         @Index(name = "idx_batch_status", columnList = "status"),
         @Index(name = "idx_batch_arrival_date", columnList = "arrival_date"),
-        @Index(name = "idx_batch_created_by", columnList = "created_by_id")
+        @Index(name = "idx_batch_created_by", columnList = "created_by_id"),
+        @Index(name = "idx_batch_building", columnList = "building_id")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -44,6 +46,16 @@ public class Batch {
     @Column(name = "arrival_date", nullable = false)
     private LocalDate arrivalDate;
 
+    @Column(length = 100)
+    private String strain;
+
+    @Column(name = "purchase_price", precision = 10, scale = 2)
+    private BigDecimal purchasePrice;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_id")
+    private Building building;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BatchStatus status;
@@ -51,7 +63,6 @@ public class Batch {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // Spring Boot Best Practice: LAZY fetch pour éviter N+1
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
