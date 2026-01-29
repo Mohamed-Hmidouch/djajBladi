@@ -2,7 +2,7 @@
 
 ## Run with Docker (one instance, no external DB)
 
-App + Postgres + Redis run together; no separate DB hosting.
+App + Postgres + Redis run together in one compose stack. The app uses the **postgres** and **redis** services from the same compose—no `DATABASE_URL` or Redis URL to configure.
 
 ```bash
 # Build and run app, Postgres, Redis
