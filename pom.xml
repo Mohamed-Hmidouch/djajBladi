@@ -79,10 +79,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-        <!-- Flyway ✅ (SB4: use starter for autoconfig + FlywayConfigurationCustomizer) -->
+        <!-- Flyway ✅ (SB4: starter for autoconfig; flyway-database-postgresql for jdbc:postgresql) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <!-- Redis ✅ -->
         <dependency>
