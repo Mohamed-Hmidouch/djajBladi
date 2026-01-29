@@ -12,7 +12,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/djaj_bladi
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      # Redis from redis service (same compose)
+      # Redis from redis service (same compose); use default profile (Redis enabled)
+      SPRING_PROFILES_ACTIVE: default
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       PORT: "8081"

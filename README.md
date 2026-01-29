@@ -23,15 +23,15 @@ For production, use strong passwords and consider removing `ports` for `postgres
 
 ## Deploy on Koyeb (prod)
 
-Without Redis on Koyeb, use profile **noredis** (in-memory cache). Set these **environment variables** in Koyeb:
+The app defaults to **noredis** (in-memory cache) when `SPRING_PROFILES_ACTIVE` is not set, so it runs without Redis. Set these **environment variables** in Koyeb:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SPRING_PROFILES_ACTIVE` | ✅ | `noredis` |
 | `JWT_SECRET` | ✅ | e.g. `openssl rand -hex 64` |
 | `DATABASE_URL` or `SPRING_DATASOURCE_URL` | ✅ | Neon JDBC URL (`jdbc:postgresql://...?sslmode=require`) |
 | `SPRING_DATASOURCE_USERNAME` | If not in URL | Neon user |
 | `SPRING_DATASOURCE_PASSWORD` | If not in URL | Neon password |
+| `SPRING_PROFILES_ACTIVE` | No | Defaults to `noredis`; only set if you use Redis (e.g. `default`). |
 
 **Neon:** If you see `relation "users" does not exist`, use the **direct** DB URL (not the `-pooler` one) for `DATABASE_URL` so Flyway can run DDL. Then redeploy.
 
