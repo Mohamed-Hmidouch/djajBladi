@@ -11,9 +11,14 @@ import org.example.djajbladibackend.security.JwtUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_EMAIL_EXISTS;
+import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_USERS;
 
 /**
  * Spring Boot Best Practice: Service avec @Transactional
@@ -70,9 +75,10 @@ public class AuthService {
 
     /**
      * Spring Boot Best Practice: @Transactional pour opération d'écriture
-     * Enregistre un nouvel utilisateur
+     * Enregistre un nouvel utilisateur. Evicts cache for new email.
      */
     @Transactional
+    @CacheEvict(cacheNames = { CACHE_USERS, CACHE_EMAIL_EXISTS }, key = "#registerRequest.email")
     public UserResponse register(RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
             throw new RuntimeException("Email already exists");
@@ -107,17 +113,38 @@ public class AuthService {
     }
 
     /**
-     * Vérifie si un email existe déjà
+     * Vérifie si un email existe déjà (cached for optimisation).
      */
+    @Cacheable(cacheNames = CACHE_EMAIL_EXISTS, key = "#email")
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);
     }
 
     /**
-     * Récupère un utilisateur par email
+     * Récupère un utilisateur par email (cached: first request hits DB, next hit Redis).
      */
+    @Cacheable(cacheNames = CACHE_USERS, key = "#email")
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
+
+    /**
+     * Returns current user profile (uses cached getUserByEmail).
+     */
+    public UserResponse getCurrentUserProfile(String email) {
+        User user = getUserByEmail(email);
+        return UserResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .role(user.getRole())
+                .isActive(user.getIsActive())
+                .city(user.getCity())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .build();
     }
 }

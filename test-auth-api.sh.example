@@ -1,0 +1,23 @@
+#!/bin/bash
+# Auth API tests – use env vars only (no credentials in repo).
+# Copy to test-auth-api.sh, then: export TEST_BASE_URL TEST_LOGIN_EMAIL TEST_LOGIN_PASSWORD
+
+BASE_URL="${TEST_BASE_URL:-http://localhost:8081/api/auth}"
+
+echo "========================================="
+echo "  Auth API tests"
+echo "========================================="
+
+# Login (requires TEST_LOGIN_EMAIL, TEST_LOGIN_PASSWORD)
+LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"${TEST_LOGIN_EMAIL:?set TEST_LOGIN_EMAIL}\",\"password\":\"${TEST_LOGIN_PASSWORD:?set TEST_LOGIN_PASSWORD}\"}")
+HTTP_CODE=$(echo "$LOGIN_RESP" | tail -n1)
+BODY=$(echo "$LOGIN_RESP" | sed '$d')
+
+if [ "$HTTP_CODE" != "200" ]; then
+  echo "Login failed (HTTP $HTTP_CODE). Check TEST_LOGIN_EMAIL / TEST_LOGIN_PASSWORD."
+  exit 1
+fi
+
+echo "Login OK. Add more curl tests as needed."

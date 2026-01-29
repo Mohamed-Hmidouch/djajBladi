@@ -1,0 +1,29 @@
+#!/bin/bash
+# Redis cache test – use env vars only (no credentials in repo).
+# Copy to test-redis-cache.sh, then: export TEST_BASE_URL TEST_LOGIN_EMAIL TEST_LOGIN_PASSWORD
+
+BASE_URL="${TEST_BASE_URL:-http://localhost:8081/api}"
+AUTH_URL="$BASE_URL/auth"
+
+echo "=============================================="
+echo "  Redis cache test"
+echo "=============================================="
+
+LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$AUTH_URL/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"${TEST_LOGIN_EMAIL:?set TEST_LOGIN_EMAIL}\",\"password\":\"${TEST_LOGIN_PASSWORD:?set TEST_LOGIN_PASSWORD}\"}")
+HTTP_CODE=$(echo "$LOGIN_RESP" | tail -n1)
+BODY=$(echo "$LOGIN_RESP" | sed '$d')
+
+[ "$HTTP_CODE" != "200" ] && { echo "Login failed."; exit 1; }
+
+TOKEN=$(echo "$BODY" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+[ -z "$TOKEN" ] && { echo "No token."; exit 1; }
+
+echo "First GET /me (cache MISS)..."
+curl -s -o /dev/null -w "Time: %{time_total}s\n" -H "Authorization: Bearer $TOKEN" "$BASE_URL/users/me"
+
+echo "Second GET /me (cache HIT)..."
+curl -s -o /dev/null -w "Time: %{time_total}s\n" -H "Authorization: Bearer $TOKEN" "$BASE_URL/users/me"
+
+echo "Done."

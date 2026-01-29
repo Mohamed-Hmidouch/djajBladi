@@ -35,3 +35,7 @@ build/
 # Claude AI Skills
 .claude-skills/
 .claude.json
+
+# Test scripts (may contain credentials; use .example + env vars)
+test-*.sh
+!test-*.sh.example
