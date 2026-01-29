@@ -68,6 +68,44 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(RegistrationNotAllowedException.class)
+    public ProblemDetail handleRegistrationNotAllowed(RegistrationNotAllowedException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Registration Not Allowed");
+        problemDetail.setProperty("timestamp", Instant.now());
+        
+        log.warn("Registration not allowed: {}", ex.getMessage());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DuplicateBatchNumberException.class)
+    public ProblemDetail handleDuplicateBatchNumber(DuplicateBatchNumberException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Duplicate Batch Number");
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Duplicate batch number: {}", ex.getMessage());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Email Already Exists");
+        problemDetail.setProperty("timestamp", Instant.now());
+        
+        log.warn("Email already exists: {}", ex.getMessage());
+        return problemDetail;
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(

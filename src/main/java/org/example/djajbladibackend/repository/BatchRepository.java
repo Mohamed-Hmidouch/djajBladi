@@ -21,6 +21,9 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     @Query("SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy WHERE b.id = :id")
     Optional<Batch> findByIdWithCreatedBy(@Param("id") Long id);
 
+    @Query("SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy LEFT JOIN FETCH b.building WHERE b.id = :id")
+    Optional<Batch> findByIdWithCreatedByAndBuilding(@Param("id") Long id);
+
     @Query("SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy WHERE b.batchNumber = :batchNumber")
     Optional<Batch> findByBatchNumberWithCreatedBy(@Param("batchNumber") String batchNumber);
 

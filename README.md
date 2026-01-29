@@ -47,6 +47,7 @@ Then redeploy.
 - **Actuator**: Only `health` and `info` exposed (never `*`).
 - **Vulnerabilities**: Run `mvn dependency-check:check` before releases.
 - **Test scripts**: Use `test-*.sh.example` with `TEST_LOGIN_EMAIL` / `TEST_LOGIN_PASSWORD`; never commit credentials.
+- **Registration**: Only `Client` can self-register via `POST /api/auth/register`. `Admin`, `Ouvrier` and `Veterinaire` are created via database seed/migration or by an admin (see Admin API).
 
 ## Redis caching
 

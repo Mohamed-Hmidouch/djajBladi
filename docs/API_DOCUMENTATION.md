@@ -11,6 +11,11 @@
 - [Authentication](#-authentication)
   - [Register](#1-register)
   - [Login](#2-login)
+- [Admin API](#-admin-api) (requires `Authorization: Bearer <JWT>` and Admin role)
+  - [Create User (Ouvrier / Vétérinaire)](#1-create-user-ouvrier--vétérinaire)
+  - [Buildings](#2-buildings)
+  - [Batches](#3-batches)
+  - [Stock](#4-stock)
 - [Error Handling](#-error-handling)
 - [Models](#-models)
 - [TypeScript Types](#-typescript-types)
@@ -54,11 +59,7 @@ Content-Type: application/json
 | `phoneNumber` | string | ❌ No | - | Phone number (E.164 format recommended) |
 | `role` | string | ❌ No | enum | User role (defaults to `Client`) |
 
-**Roles Available:**
-- `Admin` - Administrator with full access
-- `Ouvrier` - Worker/Employee
-- `Veterinaire` - Veterinarian
-- `Client` - Customer (default)
+**Only `Client` can self-register** (default when `role` is omitted). `Admin`, `Ouvrier` and `Veterinaire` cannot register via this endpoint; they are created via database seed/migration or by an admin (see Admin API).
 
 **Success Response:** `201 Created`
 ```json
@@ -83,6 +84,7 @@ Content-Type: application/json
 | Status | Description | Response |
 |--------|-------------|----------|
 | `400 Bad Request` | Email already exists | Empty body |
+| `400 Bad Request` | Registration with role `Admin`, `Ouvrier` or `Veterinaire` not allowed (only `Client` can self-register) | ProblemDetail |
 | `400 Bad Request` | Validation error | `{ "errors": { "field": "message" } }` |
 
 **Validation Error Example:**
@@ -165,6 +167,136 @@ Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
 **Token Expiration:**
 - Access Token: 24 hours (86400000 ms)
 - Refresh Token: 7 days (604800000 ms)
+
+---
+
+## 🛠 Admin API
+
+All admin endpoints require `Authorization: Bearer <JWT>` and the authenticated user must have role **Admin**.  
+Base path: `/api/admin`.
+
+### 1. Create User (Ouvrier / Vétérinaire)
+
+Creates an Ouvrier or Veterinaire account. Only these two roles are allowed.
+
+**Endpoint:** `POST /api/admin/users`
+
+**Request Body:**
+```json
+{
+  "firstName": "Jean",
+  "lastName": "Ouvrier",
+  "email": "jean.ouvrier@example.com",
+  "password": "SecurePass@123",
+  "phoneNumber": "+212600000002",
+  "role": "Ouvrier"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `firstName` | string | ✅ | max 100 chars |
+| `lastName` | string | ✅ | max 100 chars |
+| `email` | string | ✅ | valid email, unique |
+| `password` | string | ✅ | min 8 chars |
+| `phoneNumber` | string | ❌ | optional |
+| `role` | string | ✅ | `Ouvrier` or `Veterinaire` only |
+
+**Success:** `201 Created` — returns `UserResponse` (same shape as register).
+
+**Errors:** `400` if email already exists or role is not Ouvrier/Veterinaire; `404` if admin user not found.
+
+---
+
+### 2. Buildings
+
+Create and list buildings (name, max capacity, optional image).
+
+**Create:** `POST /api/admin/buildings`
+
+```json
+{
+  "name": "Bâtiment A",
+  "maxCapacity": 5000,
+  "imageUrl": "https://example.com/images/batiment-a.jpg"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✅ | max 100 chars |
+| `maxCapacity` | number | ✅ | positive integer (poussins) |
+| `imageUrl` | string | ❌ | max 512 chars, URL or path to image |
+
+**Success:** `201 Created` — returns `BuildingResponse`: `id`, `name`, `maxCapacity`, `imageUrl`, `createdAt`, `updatedAt`.
+
+**List:** `GET /api/admin/buildings` → `200 OK`, array of `BuildingResponse`.
+
+**Get by ID:** `GET /api/admin/buildings/{id}` → `200 OK` or `404`.
+
+---
+
+### 3. Batches
+
+Create a new batch (lot) with strain, quantity, purchase price, arrival date, optional building.
+
+**Endpoint:** `POST /api/admin/batches`
+
+```json
+{
+  "batchNumber": "BL-2026-001",
+  "strain": "Cobb 500",
+  "chickenCount": 2000,
+  "arrivalDate": "2026-02-15",
+  "purchasePrice": 15000.00,
+  "buildingId": 1,
+  "notes": "Premier lot de l'année"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `batchNumber` | string | ✅ | unique, max 50 chars |
+| `strain` | string | ✅ | souche, max 100 chars |
+| `chickenCount` | number | ✅ | positive |
+| `arrivalDate` | string | ✅ | ISO date (YYYY-MM-DD) |
+| `purchasePrice` | number | ✅ | prix d'achat |
+| `buildingId` | number | ❌ | optional, must exist |
+| `notes` | string | ❌ | max 2000 chars |
+
+**Success:** `201 Created` — returns `BatchResponse`: `id`, `batchNumber`, `strain`, `chickenCount`, `arrivalDate`, `purchasePrice`, `buildingId`, `buildingName`, `status`, `notes`, `createdById`, `createdAt`, `updatedAt`.
+
+**Errors:** `409 Conflict` if batch number already exists; `404` if building or user not found.
+
+---
+
+### 4. Stock
+
+Add and list stock items (aliments, vaccins, vitamines).
+
+**Add:** `POST /api/admin/stock`
+
+```json
+{
+  "type": "Feed",
+  "name": "Aliment démarrage",
+  "quantity": 100.5,
+  "unit": "sac"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `type` | string | ✅ | `Feed` \| `Vaccine` \| `Vitamin` |
+| `name` | string | ❌ | max 200 chars |
+| `quantity` | number | ✅ | positive |
+| `unit` | string | ✅ | e.g. `sac`, `dose`, `flacon`, max 50 chars |
+
+**Success:** `201 Created` — returns `StockItemResponse`: `id`, `type`, `name`, `quantity`, `unit`, `createdAt`, `updatedAt`.
+
+**List:** `GET /api/admin/stock` → `200 OK`, array of `StockItemResponse` (ordered by type, then name).
+
+**Get by ID:** `GET /api/admin/stock/{id}` → `200 OK` or `404`.
 
 ---
 
@@ -457,24 +589,59 @@ export const authApi = {
 ## 🧪 Testing with cURL
 
 ```bash
-# Register Admin
+# Register (Client only; Admin/Ouvrier/Veterinaire cannot self-register)
 curl -X POST http://localhost:8081/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "firstName": "Admin",
-    "lastName": "User",
-    "email": "admin@djajbladi.com",
-    "password": "Admin@123",
-    "role": "Admin"
+    "firstName": "Mohamed",
+    "lastName": "Client",
+    "email": "client@example.com",
+    "password": "Client@123"
   }'
 
 # Login
 curl -X POST http://localhost:8081/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@djajbladi.com",
-    "password": "Admin@123"
+    "email": "client@example.com",
+    "password": "Client@123"
   }'
+
+# Admin: create Ouvrier (use JWT from admin login)
+curl -X POST http://localhost:8081/api/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT>" \
+  -d '{
+    "firstName": "Jean",
+    "lastName": "Ouvrier",
+    "email": "jean@example.com",
+    "password": "Ouvrier@123",
+    "role": "Ouvrier"
+  }'
+
+# Admin: create building
+curl -X POST http://localhost:8081/api/admin/buildings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT>" \
+  -d '{"name": "Bâtiment A", "maxCapacity": 5000}'
+
+# Admin: create batch
+curl -X POST http://localhost:8081/api/admin/batches \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT>" \
+  -d '{
+    "batchNumber": "BL-2026-001",
+    "strain": "Cobb 500",
+    "chickenCount": 2000,
+    "arrivalDate": "2026-02-15",
+    "purchasePrice": 15000
+  }'
+
+# Admin: add stock
+curl -X POST http://localhost:8081/api/admin/stock \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <JWT>" \
+  -d '{"type": "Feed", "name": "Aliment démarrage", "quantity": 100, "unit": "sac"}'
 ```
 
 ---
@@ -489,5 +656,5 @@ curl -X POST http://localhost:8081/api/auth/login \
 
 ---
 
-**Last Updated:** January 28, 2026  
+**Last Updated:** January 29, 2026  
 **API Version:** 1.0.0

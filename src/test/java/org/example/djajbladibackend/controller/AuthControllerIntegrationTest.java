@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
@@ -65,8 +64,8 @@ class AuthControllerIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("✅ POST /api/auth/register should create Admin user")
-    void testRegister_Admin_Success() throws Exception {
+    @DisplayName("❌ POST /api/auth/register with role Admin should return 400 (registration not allowed)")
+    void testRegister_Admin_Rejected_BadRequest() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setFirstName("Admin");
         request.setLastName("User");
@@ -75,22 +74,16 @@ class AuthControllerIntegrationTest {
         request.setPhoneNumber("+212600000001");
         request.setRole(RoleEnum.Admin);
 
-        MvcResult result = mockMvc.perform(post(AUTH_BASE_URL + "/register")
+        mockMvc.perform(post(AUTH_BASE_URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("admin@djajbladi.com"))
-                .andExpect(jsonPath("$.role").value("Admin"))
-                .andReturn();
-
-        String responseBody = result.getResponse().getContentAsString();
-        assertThat(responseBody).contains("Admin User");
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @Order(2)
-    @DisplayName("✅ POST /api/auth/register should create Ouvrier user")
-    void testRegister_Worker_Success() throws Exception {
+    @DisplayName("❌ POST /api/auth/register with role Ouvrier should return 400 (only Client can self-register)")
+    void testRegister_Ouvrier_Rejected_BadRequest() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setFirstName("Ouvrier");
         request.setLastName("Worker");
@@ -102,12 +95,31 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post(AUTH_BASE_URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("ouvrier@djajbladi.com"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @Order(3)
+    @DisplayName("✅ POST /api/auth/register should create Client user")
+    void testRegister_Client_Success() throws Exception {
+        RegisterRequest request = new RegisterRequest();
+        request.setFirstName("Client");
+        request.setLastName("User");
+        request.setEmail("client@djajbladi.com");
+        request.setPassword("Client@123");
+        request.setPhoneNumber("+212600000003");
+        request.setRole(RoleEnum.Client);
+
+        mockMvc.perform(post(AUTH_BASE_URL + "/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("client@djajbladi.com"))
+                .andExpect(jsonPath("$.role").value("Client"));
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("❌ POST /api/auth/register should fail with duplicate email")
     void testRegister_DuplicateEmail_BadRequest() throws Exception {
         RegisterRequest request1 = new RegisterRequest();
@@ -138,16 +150,16 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @DisplayName("✅ POST /api/auth/login should return JWT tokens")
     void testLogin_Success() throws Exception {
-        // First register a user
+        // First register a user (Client; Admin cannot be registered via API)
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFirstName("Login");
         registerRequest.setLastName("Test");
         registerRequest.setEmail("login@djajbladi.com");
         registerRequest.setPassword("Login@123");
-        registerRequest.setRole(RoleEnum.Admin);
+        registerRequest.setRole(RoleEnum.Client);
 
         mockMvc.perform(post(AUTH_BASE_URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -166,11 +178,11 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.refreshToken").exists())
                 .andExpect(jsonPath("$.email").value("login@djajbladi.com"))
-                .andExpect(jsonPath("$.role").value("Admin"));
+                .andExpect(jsonPath("$.role").value("Client"));
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     @DisplayName("❌ POST /api/auth/login should fail with wrong password")
     void testLogin_WrongPassword_Unauthorized() throws Exception {
         // First register a user
@@ -198,7 +210,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     @DisplayName("❌ POST /api/auth/login should fail with non-existent user")
     void testLogin_NonExistentUser_Unauthorized() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
@@ -212,7 +224,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     @DisplayName("❌ POST /api/auth/register should fail with invalid email format")
     void testRegister_InvalidEmail_BadRequest() throws Exception {
         RegisterRequest request = new RegisterRequest();
