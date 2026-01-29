@@ -1,17 +1,24 @@
+# Single stack: app + Postgres + Redis. No external DB URL config—everything uses services below.
+# Run: docker compose up -d --build
+# API: http://localhost:8081
+
 services:
   app:
     build: .
+    image: djaj-bladi-app:latest
     container_name: djaj-bladi-app
     environment:
+      # DB from postgres service (same compose)—no URL config needed
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/djaj_bladi
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      # Redis from redis service (same compose)
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      SERVER_PORT: "8081"
+      PORT: "8081"
       SPRING_DOCKER_COMPOSE_SKIP: "true"
       SPRING_DEVTOOLS_RESTART_ENABLED: "false"
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-openssl-rand-hex-64}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
     ports:
       - "8081:8081"
     networks:
@@ -21,6 +28,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
@@ -40,6 +48,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -56,6 +65,7 @@ services:
       timeout: 3s
       retries: 5
     command: redis-server --appendonly yes
+    restart: unless-stopped
 
   pgadmin:
     profiles:
