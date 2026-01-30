@@ -3,7 +3,7 @@ package org.example.djajbladibackend.services.admin;
 import org.example.djajbladibackend.dto.admin.CreateUserRequest;
 import org.example.djajbladibackend.dto.user.UserResponse;
 import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
-import org.example.djajbladibackend.exception.RegistrationNotAllowedException;
+import org.example.djajbladibackend.exception.InvalidRoleForAdminCreationException;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.factory.UserFactory;
 import org.example.djajbladibackend.models.User;
@@ -35,18 +35,25 @@ public class AdminUserService {
         userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
 
-        if (req.getRole() != RoleEnum.Ouvrier && req.getRole() != RoleEnum.Veterinaire) {
-            throw new RegistrationNotAllowedException(
-                    "Only Ouvrier or Veterinaire can be created via this endpoint. Role received: " + req.getRole());
+        if (req.getRole() == RoleEnum.Client) {
+            throw new InvalidRoleForAdminCreationException(
+                    "Client cannot be created via this endpoint. Clients self-register. Use Admin, Ouvrier or Veterinaire.");
+        }
+        if (req.getRole() != RoleEnum.Admin && req.getRole() != RoleEnum.Ouvrier && req.getRole() != RoleEnum.Veterinaire) {
+            throw new InvalidRoleForAdminCreationException(
+                    "Invalid role. Use Admin, Ouvrier or Veterinaire. Received: " + req.getRole());
         }
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
         String fullName = req.getFirstName() + " " + req.getLastName();
-        User user = req.getRole() == RoleEnum.Ouvrier
-                ? userFactory.createWorker(fullName, req.getEmail(), req.getPassword())
-                : userFactory.createVeterinarian(fullName, req.getEmail(), req.getPassword());
+        User user = switch (req.getRole()) {
+            case Admin -> userFactory.createAdmin(fullName, req.getEmail(), req.getPassword());
+            case Ouvrier -> userFactory.createWorker(fullName, req.getEmail(), req.getPassword());
+            case Veterinaire -> userFactory.createVeterinarian(fullName, req.getEmail(), req.getPassword());
+            default -> throw new InvalidRoleForAdminCreationException("Unsupported role: " + req.getRole());
+        };
         if (req.getPhoneNumber() != null) {
             user.setPhoneNumber(req.getPhoneNumber());
         }

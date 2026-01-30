@@ -81,6 +81,19 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(InvalidRoleForAdminCreationException.class)
+    public ProblemDetail handleInvalidRoleForAdminCreation(InvalidRoleForAdminCreationException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Invalid Role");
+        problemDetail.setProperty("timestamp", Instant.now());
+        
+        log.warn("Invalid role for admin user creation: {}", ex.getMessage());
+        return problemDetail;
+    }
+
     @ExceptionHandler(DuplicateBatchNumberException.class)
     public ProblemDetail handleDuplicateBatchNumber(DuplicateBatchNumberException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(

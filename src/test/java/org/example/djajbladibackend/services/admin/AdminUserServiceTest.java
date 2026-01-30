@@ -3,7 +3,7 @@ package org.example.djajbladibackend.services.admin;
 import org.example.djajbladibackend.dto.admin.CreateUserRequest;
 import org.example.djajbladibackend.dto.user.UserResponse;
 import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
-import org.example.djajbladibackend.exception.RegistrationNotAllowedException;
+import org.example.djajbladibackend.exception.InvalidRoleForAdminCreationException;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.factory.UserFactory;
 import org.example.djajbladibackend.models.User;
@@ -138,21 +138,31 @@ class AdminUserServiceTest {
         verify(userRepository, never()).existsByEmail(anyString());
         verify(userFactory, never()).createWorker(anyString(), anyString(), anyString());
         verify(userFactory, never()).createVeterinarian(anyString(), anyString(), anyString());
+        verify(userFactory, never()).createAdmin(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    @DisplayName("❌ createUser should throw when role is Admin")
-    void createUser_RoleAdmin_Throws() {
+    @DisplayName("✅ createUser should create Admin when role is Admin")
+    void createUser_Admin_Success() {
         createRequest.setRole(RoleEnum.Admin);
-        when(userRepository.findByEmail("admin@djajbladi.com")).thenReturn(Optional.of(adminUser));
+        createRequest.setFirstName("New");
+        createRequest.setLastName("Admin");
+        createRequest.setEmail("newadmin@djajbladi.com");
+        User newAdmin = User.builder().id(4L).fullName("New Admin").email("newadmin@djajbladi.com").role(RoleEnum.Admin).isActive(true).createdAt(Instant.now()).updatedAt(Instant.now()).build();
 
-        RegistrationNotAllowedException ex = assertThrows(RegistrationNotAllowedException.class, () ->
-                adminUserService.createUser(createRequest, "admin@djajbladi.com"));
-        assertTrue(ex.getMessage().contains("Ouvrier"));
-        assertTrue(ex.getMessage().contains("Veterinaire"));
-        verify(userRepository, never()).existsByEmail(anyString());
-        verify(userRepository, never()).save(any(User.class));
+        when(userRepository.findByEmail("admin@djajbladi.com")).thenReturn(Optional.of(adminUser));
+        when(userRepository.existsByEmail("newadmin@djajbladi.com")).thenReturn(false);
+        when(userFactory.createAdmin(eq("New Admin"), eq("newadmin@djajbladi.com"), anyString())).thenReturn(newAdmin);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(cacheManager.getCache(anyString())).thenReturn(usersCache, emailExistsCache);
+
+        UserResponse resp = adminUserService.createUser(createRequest, "admin@djajbladi.com");
+
+        assertNotNull(resp);
+        assertEquals(RoleEnum.Admin, resp.getRole());
+        assertEquals("New Admin", resp.getFullName());
+        verify(userFactory, times(1)).createAdmin(eq("New Admin"), eq("newadmin@djajbladi.com"), anyString());
     }
 
     @Test
@@ -161,8 +171,10 @@ class AdminUserServiceTest {
         createRequest.setRole(RoleEnum.Client);
         when(userRepository.findByEmail("admin@djajbladi.com")).thenReturn(Optional.of(adminUser));
 
-        assertThrows(RegistrationNotAllowedException.class, () ->
+        InvalidRoleForAdminCreationException ex = assertThrows(InvalidRoleForAdminCreationException.class, () ->
                 adminUserService.createUser(createRequest, "admin@djajbladi.com"));
+        assertTrue(ex.getMessage().contains("Client"));
+        assertTrue(ex.getMessage().contains("self-register"));
         verify(userRepository, never()).save(any(User.class));
     }
 

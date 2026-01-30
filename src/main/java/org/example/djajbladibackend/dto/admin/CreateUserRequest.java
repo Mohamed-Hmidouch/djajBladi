@@ -8,7 +8,8 @@ import lombok.Data;
 import org.example.djajbladibackend.models.enums.RoleEnum;
 
 /**
- * Request body for admin creating Ouvrier or Veterinaire users.
+ * Request body for admin creating Admin, Ouvrier or Veterinaire users.
+ * Client cannot be created via this endpoint (self-register only).
  */
 @Data
 public class CreateUserRequest {
