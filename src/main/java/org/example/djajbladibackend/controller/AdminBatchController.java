@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/admin/batches")
+@RequestMapping(value = { "/api/admin/batches", "/api/dashboard/admin/batches" })
 public class AdminBatchController {
 
     private final BatchService batchService;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/stock")
+@RequestMapping(value = { "/api/admin/stock", "/api/dashboard/admin/stock" })
 public class AdminStockController {
 
     private final StockService stockService;
