@@ -175,9 +175,9 @@ Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
 All admin endpoints require `Authorization: Bearer <JWT>` and the authenticated user must have role **Admin**.  
 Base path: `/api/admin`.
 
-### 1. Create User (Ouvrier / Vétérinaire)
+### 1. Create User (Admin / Ouvrier / Vétérinaire)
 
-Creates an Ouvrier or Veterinaire account. Only these two roles are allowed.
+Creates an Admin, Ouvrier or Veterinaire account. **Client** cannot be created here (clients self-register).
 
 **Endpoint:** `POST /api/admin/users`
 
@@ -185,11 +185,11 @@ Creates an Ouvrier or Veterinaire account. Only these two roles are allowed.
 ```json
 {
   "firstName": "Jean",
-  "lastName": "Ouvrier",
-  "email": "jean.ouvrier@example.com",
+  "lastName": "Admin",
+  "email": "jean.admin@example.com",
   "password": "SecurePass@123",
   "phoneNumber": "+212600000002",
-  "role": "Ouvrier"
+  "role": "Admin"
 }
 ```
 
@@ -200,11 +200,14 @@ Creates an Ouvrier or Veterinaire account. Only these two roles are allowed.
 | `email` | string | ✅ | valid email, unique |
 | `password` | string | ✅ | min 8 chars |
 | `phoneNumber` | string | ❌ | optional |
-| `role` | string | ✅ | `Ouvrier` or `Veterinaire` only |
+| `role` | string | ✅ | `Admin`, `Ouvrier` or `Veterinaire` only |
 
 **Success:** `201 Created` — returns `UserResponse` (same shape as register).
 
-**Errors:** `400` if email already exists or role is not Ouvrier/Veterinaire; `404` if admin user not found.
+**Errors:**  
+- `400` **Invalid Role** — role is `Client` (clients self-register) or invalid.  
+- `400` **Email Already Exists** — email already registered.  
+- `404` **Resource Not Found** — admin user (JWT) not found.
 
 ---
 
@@ -607,16 +610,16 @@ curl -X POST http://localhost:8081/api/auth/login \
     "password": "Client@123"
   }'
 
-# Admin: create Ouvrier (use JWT from admin login)
+# Admin: create user (role: Admin, Ouvrier or Veterinaire; use JWT from admin login)
 curl -X POST http://localhost:8081/api/admin/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <JWT>" \
   -d '{
     "firstName": "Jean",
-    "lastName": "Ouvrier",
-    "email": "jean@example.com",
-    "password": "Ouvrier@123",
-    "role": "Ouvrier"
+    "lastName": "Admin",
+    "email": "jean.admin@example.com",
+    "password": "Admin@123",
+    "role": "Admin"
   }'
 
 # Admin: create building
