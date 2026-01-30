@@ -19,7 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
+import org.springframework.data.domain.Sort;
+
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -189,5 +192,30 @@ class AdminUserServiceTest {
         assertEquals("Email already exists", ex.getMessage());
         verify(userFactory, never()).createWorker(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("✅ getAllUsers should return all users ordered by createdAt desc")
+    void getAllUsers_Success() {
+        when(userRepository.findByEmail("admin@djajbladi.com")).thenReturn(Optional.of(adminUser));
+        when(userRepository.findAll(any(Sort.class))).thenReturn(List.of(ouvrierUser, adminUser));
+
+        List<UserResponse> list = adminUserService.getAllUsers("admin@djajbladi.com");
+
+        assertNotNull(list);
+        assertEquals(2, list.size());
+        assertEquals(ouvrierUser.getId(), list.get(0).getId());
+        assertEquals(adminUser.getId(), list.get(1).getId());
+        verify(userRepository, times(1)).findAll(any(Sort.class));
+    }
+
+    @Test
+    @DisplayName("❌ getAllUsers should throw when admin email not found")
+    void getAllUsers_AdminNotFound() {
+        when(userRepository.findByEmail("unknown@djajbladi.com")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                adminUserService.getAllUsers("unknown@djajbladi.com"));
+        verify(userRepository, never()).findAll(any(Sort.class));
     }
 }

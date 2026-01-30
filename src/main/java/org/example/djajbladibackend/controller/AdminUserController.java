@@ -8,10 +8,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = { "/api/admin/users", "/api/dashboard/admin/users" })
@@ -21,6 +24,15 @@ public class AdminUserController {
 
     public AdminUserController(AdminUserService adminUserService) {
         this.adminUserService = adminUserService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserResponse>> getAllUsers(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(adminUserService.getAllUsers(userDetails.getUsername()));
     }
 
     @PostMapping

@@ -211,7 +211,38 @@ Creates an Admin, Ouvrier or Veterinaire account. **Client** cannot be created h
 
 ---
 
-### 2. Buildings
+### 2. List Users
+
+Returns all users, ordered by `createdAt` descending. Admin only.
+
+**Endpoint:** `GET /api/admin/users` (also `GET /api/dashboard/admin/users`)
+
+**Headers:** `Authorization: Bearer <JWT>` (Admin required)
+
+**Success:** `200 OK` — body is an array of `UserResponse`:
+
+```json
+[
+  {
+    "id": 1,
+    "fullName": "Admin User",
+    "email": "admin@example.com",
+    "phoneNumber": "+212600000001",
+    "role": "Admin",
+    "isActive": true,
+    "city": null,
+    "createdAt": "2026-01-30T12:00:00Z",
+    "updatedAt": "2026-01-30T12:00:00Z",
+    "lastLoginAt": null
+  }
+]
+```
+
+**Errors:** `404` if admin user (JWT) not found.
+
+---
+
+### 3. Buildings
 
 Create and list buildings (name, max capacity, optional image).
 
@@ -239,7 +270,7 @@ Create and list buildings (name, max capacity, optional image).
 
 ---
 
-### 3. Batches
+### 4. Batches
 
 Create a new batch (lot) with strain, quantity, purchase price, arrival date, optional building.
 
@@ -273,7 +304,7 @@ Create a new batch (lot) with strain, quantity, purchase price, arrival date, op
 
 ---
 
-### 4. Stock
+### 5. Stock
 
 Add and list stock items (aliments, vaccins, vitamines).
 
@@ -609,6 +640,10 @@ curl -X POST http://localhost:8081/api/auth/login \
     "email": "client@example.com",
     "password": "Client@123"
   }'
+
+# Admin: list all users
+curl -X GET http://localhost:8081/api/admin/users \
+  -H "Authorization: Bearer <JWT>"
 
 # Admin: create user (role: Admin, Ouvrier or Veterinaire; use JWT from admin login)
 curl -X POST http://localhost:8081/api/admin/users \
