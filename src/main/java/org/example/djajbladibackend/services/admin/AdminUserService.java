@@ -10,8 +10,11 @@ import org.example.djajbladibackend.models.User;
 import org.example.djajbladibackend.models.enums.RoleEnum;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_EMAIL_EXISTS;
 import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_USERS;
@@ -65,16 +68,34 @@ public class AdminUserService {
         var emailExistsCache = cacheManager.getCache(CACHE_EMAIL_EXISTS);
         if (emailExistsCache != null) emailExistsCache.evict(req.getEmail());
 
+        return toUserResponse(saved);
+    }
+
+    /**
+     * Returns all users (Admin only). Verifies the caller is a valid user.
+     */
+    public List<UserResponse> getAllUsers(String adminEmail) {
+        userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        return userRepository.findAll(sort).stream()
+                .map(this::toUserResponse)
+                .toList();
+    }
+
+    private UserResponse toUserResponse(User u) {
         return UserResponse.builder()
-                .id(saved.getId())
-                .fullName(saved.getFullName())
-                .email(saved.getEmail())
-                .phoneNumber(saved.getPhoneNumber())
-                .role(saved.getRole())
-                .isActive(saved.getIsActive())
-                .city(saved.getCity())
-                .createdAt(saved.getCreatedAt())
-                .updatedAt(saved.getUpdatedAt())
+                .id(u.getId())
+                .fullName(u.getFullName())
+                .email(u.getEmail())
+                .phoneNumber(u.getPhoneNumber())
+                .role(u.getRole())
+                .isActive(u.getIsActive())
+                .city(u.getCity())
+                .createdAt(u.getCreatedAt())
+                .updatedAt(u.getUpdatedAt())
+                .lastLoginAt(u.getLastLoginAt())
                 .build();
     }
 }
