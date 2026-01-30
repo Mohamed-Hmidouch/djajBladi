@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/admin/users")
+@RequestMapping(value = { "/api/admin/users", "/api/dashboard/admin/users" })
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
