@@ -39,3 +39,6 @@ build/
 # Test scripts (may contain credentials; use .example + env vars)
 test-*.sh
 !test-*.sh.example
+
+# Local documentation (not tracked)
+docs/api/
