@@ -41,11 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String role = jwtUtils.getRoleFromJwtToken(jwt);
 
                 // ✅ Security Best Practice: Autorités extraites du JWT, pas de la DB
-                // Cela évite un appel DB à chaque requête authentifiée
+                // JWT contient "Admin", "Client", etc. - on ajoute le préfixe ROLE_ pour Spring Security
+                String springSecurityRole = "ROLE_" + role.toUpperCase();
+                
                 UserDetails userDetails = User.builder()
                         .username(username)
                         .password("") // Non utilisé pour l'authentification JWT
-                        .authorities(Collections.singletonList(new SimpleGrantedAuthority(role)))
+                        .authorities(Collections.singletonList(new SimpleGrantedAuthority(springSecurityRole)))
                         .build();
                 
                 UsernamePasswordAuthenticationToken authentication = 

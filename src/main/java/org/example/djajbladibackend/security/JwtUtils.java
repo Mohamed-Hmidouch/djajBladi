@@ -38,12 +38,13 @@ public class JwtUtils {
 
     /**
      * Génère un token JWT depuis le username avec le rôle
-     * ✅ Security Best Practice: Role stocké dans le claim "role" (UPPERCASE avec préfixe ROLE_)
+     * ✅ Security Best Practice: Role stocké SANS préfixe ROLE_ (ex: Admin, Client)
+     * Le préfixe ROLE_ est ajouté par le JwtAuthenticationFilter
      */
     public String generateTokenFromUsername(String username, String role) {
         return Jwts.builder()
                 .subject(username)
-                .claim("role", "ROLE_" + role.toUpperCase())
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey())
@@ -52,12 +53,12 @@ public class JwtUtils {
 
     /**
      * Génère un refresh token avec le rôle
-     * ✅ Security Best Practice: Refresh token contient aussi le rôle
+     * ✅ Security Best Practice: Role stocké SANS préfixe ROLE_
      */
     public String generateRefreshToken(String username, String role) {
         return Jwts.builder()
                 .subject(username)
-                .claim("role", "ROLE_" + role.toUpperCase())
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtRefreshExpirationMs))
                 .signWith(getSigningKey())
