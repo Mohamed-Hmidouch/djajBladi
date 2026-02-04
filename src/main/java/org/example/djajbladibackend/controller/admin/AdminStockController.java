@@ -6,14 +6,19 @@ import org.example.djajbladibackend.dto.stock.StockItemResponse;
 import org.example.djajbladibackend.services.stock.StockService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
+ */
 @RestController
 @RequestMapping(value = { "/api/admin/stock", "/api/dashboard/admin/stock" })
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminStockController {
 
     private final StockService stockService;

@@ -7,6 +7,7 @@ import org.example.djajbladibackend.services.health.HealthRecordService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +15,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
+ */
 @RestController
 @RequestMapping(value = { "/api/admin/dashboard", "/api/dashboard/admin/dashboard" })
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminSupervisionController {
 
     private final SupervisionDashboardService dashboardService;

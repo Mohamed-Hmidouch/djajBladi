@@ -50,6 +50,7 @@ public class AuthService {
 
     /**
      * Spring Boot Best Practice: Méthode readOnly pour login
+     * ✅ Security Best Practice: Role encodé dans JWT claims, pas en clair
      * Authentifie un utilisateur et génère les tokens JWT
      */
     public JwtResponse login(LoginRequest loginRequest) {
@@ -62,17 +63,18 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = jwtUtils.generateJwtToken(authentication);
-        String refreshToken = jwtUtils.generateRefreshToken(loginRequest.getEmail());
-
         User user = userRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        String role = user.getRole().name();
+        String jwt = jwtUtils.generateJwtToken(authentication, role);
+        String refreshToken = jwtUtils.generateRefreshToken(loginRequest.getEmail(), role);
+
+        // ✅ Security: Role n'est PAS retourné en clair, uniquement dans le JWT
         return new JwtResponse(
                 jwt,
                 refreshToken,
-                user.getEmail(),
-                user.getRole().name()
+                user.getEmail()
         );
     }
 

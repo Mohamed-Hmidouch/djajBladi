@@ -6,6 +6,7 @@ import org.example.djajbladibackend.dto.user.UserResponse;
 import org.example.djajbladibackend.services.admin.AdminUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
+ */
 @RestController
 @RequestMapping(value = { "/api/admin/users", "/api/dashboard/admin/users" })
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
