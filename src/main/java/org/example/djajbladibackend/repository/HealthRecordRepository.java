@@ -60,6 +60,13 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Long
             "WHERE h.mortalityCount > 0")
     List<HealthRecord> findRecordsWithMortalityWithRelations();
 
+    @Query("SELECT h FROM HealthRecord h " +
+            "LEFT JOIN FETCH h.batch " +
+            "LEFT JOIN FETCH h.veterinarian " +
+            "WHERE h.requiresApproval = true AND h.approvalStatus = 'PENDING_APPROVAL' " +
+            "ORDER BY h.createdAt ASC")
+    List<HealthRecord> findPendingApprovalWithRelations();
+
     List<HealthRecord> findByBatchId(Long batchId);
 
     List<HealthRecord> findByVeterinarianId(Long veterinarianId);

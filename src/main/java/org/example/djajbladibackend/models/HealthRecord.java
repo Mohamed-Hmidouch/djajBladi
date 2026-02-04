@@ -1,6 +1,7 @@
 package org.example.djajbladibackend.models;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -58,6 +59,24 @@ public class HealthRecord {
     @Column(name = "mortality_count")
     @Builder.Default
     private Integer mortalityCount = 0;
+
+    @Column(name = "treatment_cost", precision = 12, scale = 2)
+    private BigDecimal treatmentCost;
+
+    @Column(name = "requires_approval", nullable = false)
+    @Builder.Default
+    private Boolean requiresApproval = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", length = 20)
+    private ApprovalStatus approvalStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by_id")
+    private User approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
     @Column(columnDefinition = "TEXT")
     private String notes;

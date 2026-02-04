@@ -1,4 +1,4 @@
-package org.example.djajbladibackend.controller;
+package org.example.djajbladibackend.controller.admin;
 
 import jakarta.validation.Valid;
 import org.example.djajbladibackend.dto.admin.CreateUserRequest;
