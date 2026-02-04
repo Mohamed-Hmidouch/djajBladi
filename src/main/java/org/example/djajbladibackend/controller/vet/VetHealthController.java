@@ -6,12 +6,17 @@ import org.example.djajbladibackend.dto.health.HealthRecordResponse;
 import org.example.djajbladibackend.services.health.HealthRecordService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize pour ADMIN et VETERINAIRE
+ */
 @RestController
 @RequestMapping(value = { "/api/vet/health-records", "/api/dashboard/vet/health-records" })
+@PreAuthorize("hasAnyRole('ADMIN', 'VETERINAIRE')")
 public class VetHealthController {
 
     private final HealthRecordService healthRecordService;

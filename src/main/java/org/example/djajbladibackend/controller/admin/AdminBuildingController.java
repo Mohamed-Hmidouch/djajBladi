@@ -6,14 +6,19 @@ import org.example.djajbladibackend.dto.building.BuildingResponse;
 import org.example.djajbladibackend.services.building.BuildingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
+ */
 @RestController
 @RequestMapping(value = { "/api/admin/buildings", "/api/dashboard/admin/buildings" })
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminBuildingController {
 
     private final BuildingService buildingService;

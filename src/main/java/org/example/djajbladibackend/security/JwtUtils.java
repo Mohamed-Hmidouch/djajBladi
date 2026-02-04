@@ -29,18 +29,21 @@ public class JwtUtils {
 
     /**
      * Génère un token JWT depuis l'authentification
+     * ✅ Security Best Practice: Role encodé dans les claims JWT
      */
-    public String generateJwtToken(Authentication authentication) {
+    public String generateJwtToken(Authentication authentication, String role) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
-        return generateTokenFromUsername(userPrincipal.getUsername());
+        return generateTokenFromUsername(userPrincipal.getUsername(), role);
     }
 
     /**
-     * Génère un token JWT depuis le username
+     * Génère un token JWT depuis le username avec le rôle
+     * ✅ Security Best Practice: Role stocké dans le claim "role" (UPPERCASE avec préfixe ROLE_)
      */
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUsername(String username, String role) {
         return Jwts.builder()
                 .subject(username)
+                .claim("role", "ROLE_" + role.toUpperCase())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey())
@@ -48,11 +51,13 @@ public class JwtUtils {
     }
 
     /**
-     * Génère un refresh token
+     * Génère un refresh token avec le rôle
+     * ✅ Security Best Practice: Refresh token contient aussi le rôle
      */
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String username, String role) {
         return Jwts.builder()
                 .subject(username)
+                .claim("role", "ROLE_" + role.toUpperCase())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtRefreshExpirationMs))
                 .signWith(getSigningKey())
@@ -69,6 +74,19 @@ public class JwtUtils {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    /**
+     * Extrait le rôle du token JWT
+     * ✅ Security Best Practice: Role extrait des claims, pas de la DB
+     */
+    public String getRoleFromJwtToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 
     /**

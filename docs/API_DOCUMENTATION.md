@@ -12,10 +12,11 @@
   - [Register](#1-register)
   - [Login](#2-login)
 - [Admin API](#-admin-api) (requires `Authorization: Bearer <JWT>` and Admin role)
-  - [Create User (Ouvrier / Vétérinaire)](#1-create-user-ouvrier--vétérinaire)
-  - [Buildings](#2-buildings)
-  - [Batches](#3-batches)
-  - [Stock](#4-stock)
+  - [Create User](#1-create-user-ouvrier--vétérinaire), [List Users](#2-list-users), [Buildings](#3-buildings), [Batches](#4-batches), [Stock](#5-stock), [Supervision Dashboard](#6-supervision-dashboard)
+- [Ouvrier API](#-ouvrier-api) (requires Ouvrier or Admin role)
+  - [Daily Mortality](#ouvrier-daily-mortality), [Feeding Records](#ouvrier-feeding-records)
+- [Veterinaire API](#-veterinaire-api) (requires Veterinaire or Admin role)
+  - [Health Records](#vet-health-records)
 - [Error Handling](#-error-handling)
 - [Models](#-models)
 - [TypeScript Types](#-typescript-types)
@@ -170,7 +171,63 @@ Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
 
 ---
 
-## 🛠 Admin API
+## Profile & Settings
+
+All authenticated users can manage their profile and password. Base path: `/api/users` or `/api/dashboard/users`.
+
+### Get Profile
+
+**Endpoint:** `GET /api/users/me`
+
+**Headers:** `Authorization: Bearer <JWT>`
+
+**Success:** `200 OK` — returns `UserResponse` (id, fullName, email, phoneNumber, role, isActive, city, createdAt, updatedAt, lastLoginAt).
+
+### Update Profile
+
+**Endpoint:** `PATCH /api/users/me`
+
+**Request Body:**
+```json
+{
+  "fullName": "Mohamed Hmidouch",
+  "phoneNumber": "+212600000001",
+  "city": "Casablanca"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fullName` | string | No | max 100 chars |
+| `phoneNumber` | string | No | max 20 chars, empty to clear |
+| `city` | string | No | max 100 chars, empty to clear |
+
+**Success:** `200 OK` — returns updated `UserResponse`. Email is immutable.
+
+### Change Password
+
+**Endpoint:** `POST /api/users/me/password`
+
+**Request Body:**
+```json
+{
+  "currentPassword": "OldPass@123",
+  "newPassword": "NewSecure@456"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `currentPassword` | string | Yes | Current password for verification |
+| `newPassword` | string | Yes | Min 8 characters |
+
+**Success:** `204 No Content`
+
+**Errors:** `400 Bad Request` — current password incorrect, or new same as current.
+
+---
+
+## Admin API
 
 All admin endpoints require `Authorization: Bearer <JWT>` and the authenticated user must have role **Admin**.  
 Base path: `/api/admin`.
@@ -334,7 +391,73 @@ Add and list stock items (aliments, vaccins, vitamines).
 
 ---
 
-## ❌ Error Handling
+### 6. Supervision Dashboard
+
+**Get Dashboard:** `GET /api/admin/dashboard/supervision?startDate=&endDate=`
+- Optional: `startDate`, `endDate` (ISO date). Default: last 7 days.
+- Returns: `batchSummaries` (quantity eaten, mortality, abnormal flag), `pendingAlerts` (health records awaiting approval).
+
+**Get Pending Alerts:** `GET /api/admin/dashboard/alerts` — health records requiring Admin validation (disease or expensive treatment).
+
+**Approve:** `POST /api/admin/dashboard/health-records/{id}/approve`
+**Reject:** `POST /api/admin/dashboard/health-records/{id}/reject`
+
+---
+
+## Ouvrier API
+
+Requires `Authorization: Bearer <JWT>` and **Ouvrier** or **Admin** role. Base: `/api/ouvrier` or `/api/dashboard/ouvrier`.
+
+### Ouvrier: Daily Mortality
+
+**Record:** `POST /api/ouvrier/mortality`
+```json
+{ "batchId": 1, "recordDate": "2026-01-30", "mortalityCount": 2, "notes": "..." }
+```
+
+**Update:** `PUT /api/ouvrier/mortality/{id}` — same body.
+
+**List:** `GET /api/ouvrier/mortality?startDate=2026-01-01&endDate=2026-01-30&batchId=1` (batchId optional).
+
+**Validation:** `recordDate` cannot be in future; batch must be Active; one record per batch per day (unique). `403 Forbidden` if role not Ouvrier/Admin.
+
+### Ouvrier: Feeding Records
+
+**Create:** `POST /api/ouvrier/feeding`
+```json
+{ "batchId": 1, "feedType": "Aliment croissance", "quantity": 150.5, "feedingDate": "2026-01-30", "notes": "..." }
+```
+
+**List:** `GET /api/ouvrier/feeding?startDate=&endDate=&batchId=` (batchId optional).
+
+---
+
+## Veterinaire API
+
+Requires `Authorization: Bearer <JWT>` and **Veterinaire** or **Admin** role. Base: `/api/vet` or `/api/dashboard/vet`.
+
+### Vet: Health Records
+
+**Create:** `POST /api/vet/health-records`
+```json
+{
+  "batchId": 1,
+  "diagnosis": "Coccidiose",
+  "treatment": "Amprolium 5 jours",
+  "examinationDate": "2026-01-30",
+  "nextVisitDate": "2026-02-05",
+  "mortalityCount": 3,
+  "treatmentCost": 6500,
+  "isDiseaseReported": true,
+  "notes": "..."
+}
+```
+
+If `isDiseaseReported=true` or `treatmentCost >= 5000` (configurable), the record requires Admin approval. Admin sees it in `/api/admin/dashboard/alerts` and can approve or reject.
+
+---
+
+## Error Handling
 
 All errors follow a consistent format:
 

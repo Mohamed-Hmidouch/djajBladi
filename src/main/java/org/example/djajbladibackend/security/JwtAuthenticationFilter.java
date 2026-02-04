@@ -6,18 +6,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  * Filtre JWT pour authentifier les requêtes
+ * ✅ Security Best Practice: Extraction du rôle depuis les claims JWT (pas de DB call)
  * ✅ Spring Boot Best Practice: Validation JWT pour chaque requête
  */
 @Component
@@ -25,9 +28,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
@@ -38,8 +38,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUsernameFromJwtToken(jwt);
+                String role = jwtUtils.getRoleFromJwtToken(jwt);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // ✅ Security Best Practice: Autorités extraites du JWT, pas de la DB
+                // Cela évite un appel DB à chaque requête authentifiée
+                UserDetails userDetails = User.builder()
+                        .username(username)
+                        .password("") // Non utilisé pour l'authentification JWT
+                        .authorities(Collections.singletonList(new SimpleGrantedAuthority(role)))
+                        .build();
                 
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(

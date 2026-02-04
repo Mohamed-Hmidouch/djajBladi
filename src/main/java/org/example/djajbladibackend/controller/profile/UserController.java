@@ -8,12 +8,17 @@ import org.example.djajbladibackend.services.auth.AuthService;
 import org.example.djajbladibackend.services.profile.ProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * ✅ Security Best Practice: @PreAuthorize pour tout utilisateur authentifié
+ */
 @RestController
 @RequestMapping(value = { "/api/users", "/api/dashboard/users" })
+@PreAuthorize("isAuthenticated()")
 public class UserController {
 
     private final AuthService authService;
