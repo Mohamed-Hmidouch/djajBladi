@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -106,9 +107,9 @@ class AuthServiceTest {
         // Given
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
-        when(jwtUtils.generateJwtToken(authentication)).thenReturn("jwt-access-token");
-        when(jwtUtils.generateRefreshToken(anyString())).thenReturn("jwt-refresh-token");
         when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
+        when(jwtUtils.generateJwtToken(eq(authentication), anyString())).thenReturn("jwt-access-token");
+        when(jwtUtils.generateRefreshToken(anyString(), anyString())).thenReturn("jwt-refresh-token");
 
         // When
         JwtResponse response = authService.login(loginRequest);
@@ -118,11 +119,11 @@ class AuthServiceTest {
         assertEquals("jwt-access-token", response.getToken());
         assertEquals("jwt-refresh-token", response.getRefreshToken());
         assertEquals("test@djajbladi.com", response.getEmail());
-        assertEquals("Admin", response.getRole());
+        // ✅ Security: Role is NOT in response, only in JWT claims
 
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtUtils, times(1)).generateJwtToken(authentication);
-        verify(jwtUtils, times(1)).generateRefreshToken(loginRequest.getEmail());
+        verify(jwtUtils, times(1)).generateJwtToken(eq(authentication), anyString());
+        verify(jwtUtils, times(1)).generateRefreshToken(eq(loginRequest.getEmail()), anyString());
         verify(userRepository, times(1)).findByEmail(loginRequest.getEmail());
     }
 
