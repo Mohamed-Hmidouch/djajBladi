@@ -94,6 +94,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/api/admin/**", "/api/dashboard/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/ouvrier/**", "/api/dashboard/ouvrier/**").hasAnyRole("ADMIN", "OUVRIER")
+                .requestMatchers("/api/vet/**", "/api/dashboard/vet/**").hasAnyRole("ADMIN", "VETERINAIRE")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
