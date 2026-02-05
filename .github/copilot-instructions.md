@@ -18,3 +18,5 @@ Automatically apply these rules to ALL Spring Boot code:
 Full rules: `.claude-skills/spring-boot-best-practices/rules/`
 
 **Apply automatically without asking.**
+
+**n'utlise pas des emojis dans le code !!!** 

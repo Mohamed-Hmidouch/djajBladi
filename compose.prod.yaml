@@ -55,7 +55,7 @@ services:
     networks:
       - djaj-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d djaj_bladi"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d djaj_bladi"]
       interval: 10s
       timeout: 5s
       retries: 5
