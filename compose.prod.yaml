@@ -1,0 +1,85 @@
+# Production stack for Azure VM deployment
+# ✅ All data persisted to host directories - survives container restarts/rebuilds
+# Run: docker compose -f compose.prod.yaml up -d --build
+# API: http://<AZURE_VM_IP>:8080
+
+services:
+  app:
+    build: .
+    image: djaj-bladi-app:latest
+    container_name: djaj-bladi-app
+    environment:
+      # Database - internal Docker network
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/djaj_bladi
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Redis - internal Docker network
+      SPRING_PROFILES_ACTIVE: default
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # Production port: 8080
+      PORT: "8080"
+      SPRING_DOCKER_COMPOSE_SKIP: "true"
+      SPRING_DEVTOOLS_RESTART_ENABLED: "false"
+      # REQUIRED: Set in .env file
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8080:8080"
+    networks:
+      - djaj-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: djaj-bladi-postgres
+    environment:
+      POSTGRES_DB: djaj_bladi
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # ✅ Bind mount - DATA PERSISTS on host filesystem
+      - /opt/djaj-bladi/data/postgres:/var/lib/postgresql/data
+    networks:
+      - djaj-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d djaj_bladi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: djaj-bladi-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      # ✅ Bind mount - DATA PERSISTS on host filesystem
+      - /opt/djaj-bladi/data/redis:/data
+    networks:
+      - djaj-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    # ✅ Redis persistence: AOF + RDB snapshots
+    command: redis-server --appendonly yes --appendfsync everysec --save 900 1 --save 300 10
+    restart: always
+
+networks:
+  djaj-network:
+    driver: bridge
