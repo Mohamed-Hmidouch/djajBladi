@@ -64,5 +64,8 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     boolean existsByBatchNumber(String batchNumber);
 
+    @Query("SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy LEFT JOIN FETCH b.building ORDER BY b.createdAt DESC")
+    List<Batch> findAllWithCreatedByAndBuildingOrderByCreatedAtDesc();
+
     List<Batch> findByStatus(BatchStatus status);
 }

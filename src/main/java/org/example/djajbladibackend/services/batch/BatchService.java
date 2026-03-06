@@ -2,6 +2,8 @@ package org.example.djajbladibackend.services.batch;
 
 import org.example.djajbladibackend.dto.batch.BatchCreateRequest;
 import org.example.djajbladibackend.dto.batch.BatchResponse;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.example.djajbladibackend.exception.DuplicateBatchNumberException;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.models.Batch;
@@ -52,6 +54,13 @@ public class BatchService {
                 .build();
         Batch saved = batchRepository.save(b);
         return toResponse(saved);
+    }
+
+    public List<BatchResponse> findAll() {
+        return batchRepository.findAllWithCreatedByAndBuildingOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     public BatchResponse findById(Long id) {
