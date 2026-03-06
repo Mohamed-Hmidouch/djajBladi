@@ -9,10 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 /**
  * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
@@ -26,6 +24,12 @@ public class AdminBatchController {
 
     public AdminBatchController(BatchService batchService) {
         this.batchService = batchService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BatchResponse>> findAll() {
+        List<BatchResponse> batches = batchService.findAll();
+        return ResponseEntity.ok(batches);
     }
 
     @PostMapping
