@@ -2,6 +2,9 @@ package org.example.djajbladibackend.controller.admin;
 
 import org.example.djajbladibackend.dto.dashboard.SupervisionDashboardResponse;
 import org.example.djajbladibackend.dto.health.HealthRecordResponse;
+import org.example.djajbladibackend.models.Batch;
+import org.example.djajbladibackend.models.BatchStatus;
+import org.example.djajbladibackend.repository.BatchRepository;
 import org.example.djajbladibackend.services.dashboard.SupervisionDashboardService;
 import org.example.djajbladibackend.services.health.HealthRecordService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
+ * Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
  */
 @RestController
 @RequestMapping(value = { "/api/admin/dashboard", "/api/dashboard/admin/dashboard" })
@@ -25,11 +28,14 @@ public class AdminSupervisionController {
 
     private final SupervisionDashboardService dashboardService;
     private final HealthRecordService healthRecordService;
+    private final BatchRepository batchRepository;
 
     public AdminSupervisionController(SupervisionDashboardService dashboardService,
-                                       HealthRecordService healthRecordService) {
+                                       HealthRecordService healthRecordService,
+                                       BatchRepository batchRepository) {
         this.dashboardService = dashboardService;
         this.healthRecordService = healthRecordService;
+        this.batchRepository = batchRepository;
     }
 
     @GetMapping("/supervision")
@@ -43,6 +49,20 @@ public class AdminSupervisionController {
         LocalDate end = endDate != null ? endDate : LocalDate.now();
         LocalDate start = startDate != null ? startDate : end.minusDays(7);
         return ResponseEntity.ok(dashboardService.getDashboard(start, end, userDetails.getUsername()));
+    }
+
+    /**
+     * ICR (Indice de Consommation / FCR) en temps reel pour tous les lots actifs.
+     * GET /api/admin/dashboard/fcr
+     */
+    @GetMapping("/fcr")
+    public ResponseEntity<List<SupervisionDashboardResponse.BatchFcrSummary>> getFcrSummaries(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        List<Batch> activeBatches = batchRepository.findByStatus(BatchStatus.Active);
+        return ResponseEntity.ok(dashboardService.buildFcrSummaries(activeBatches));
     }
 
     @GetMapping("/alerts")
@@ -74,5 +94,3 @@ public class AdminSupervisionController {
         return ResponseEntity.ok(healthRecordService.reject(id, userDetails.getUsername()));
     }
 }
-
-
