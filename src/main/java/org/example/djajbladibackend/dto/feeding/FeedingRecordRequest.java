@@ -14,6 +14,9 @@ public class FeedingRecordRequest {
     @NotNull(message = "Batch ID is required")
     private Long batchId;
 
+    @NotNull(message = "Stock item ID is required for traceability")
+    private Long stockItemId;
+
     @NotNull(message = "Feed type is required")
     @Size(max = 100)
     private String feedType;
