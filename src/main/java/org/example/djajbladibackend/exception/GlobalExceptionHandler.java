@@ -303,6 +303,23 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ProblemDetail handleInsufficientStock(InsufficientStockException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Insufficient Stock");
+        problemDetail.setProperty("stockItemId", ex.getStockItemId());
+        problemDetail.setProperty("stockItemName", ex.getStockItemName());
+        problemDetail.setProperty("availableKg", ex.getAvailable());
+        problemDetail.setProperty("requestedKg", ex.getRequested());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Insufficient stock: stockItemId={}, available={}, requested={}",
+            ex.getStockItemId(), ex.getAvailable(), ex.getRequested());
+        return problemDetail;
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String message = ex.getMessage();

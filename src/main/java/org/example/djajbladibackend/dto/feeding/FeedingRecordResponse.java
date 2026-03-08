@@ -13,6 +13,8 @@ public class FeedingRecordResponse {
     private Long id;
     private Long batchId;
     private String batchNumber;
+    private Long stockItemId;
+    private String stockItemName;
     private String feedType;
     private BigDecimal quantity;
     private LocalDate feedingDate;
