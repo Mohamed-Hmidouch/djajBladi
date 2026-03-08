@@ -50,6 +50,12 @@ public class FeedingRecord {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    // Tracabilite stock : item de stock Feed consomme lors de cet enregistrement
+    // nullable = false en pratique (enforce au niveau service pour feedType=Feed)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_item_id")
+    private StockItem stockItem;
+
     // Spring Boot Best Practice: LAZY fetch pour éviter N+1
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by_id", nullable = false)
