@@ -3,6 +3,8 @@ package org.example.djajbladibackend.repository;
 import jakarta.persistence.LockModeType;
 import org.example.djajbladibackend.models.StockItem;
 import org.example.djajbladibackend.models.StockType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +20,8 @@ public interface StockItemRepository extends JpaRepository<StockItem, Long> {
     List<StockItem> findByTypeOrderByNameAsc(StockType type);
 
     List<StockItem> findAllByOrderByTypeAscNameAsc();
+
+    Page<StockItem> findAllByOrderByTypeAscNameAsc(Pageable pageable);
 
     /**
      * Pessimistic write lock : bloque la ligne en base jusqu'a la fin de la transaction.

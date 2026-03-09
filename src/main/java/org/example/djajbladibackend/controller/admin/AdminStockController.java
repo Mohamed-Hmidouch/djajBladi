@@ -1,6 +1,7 @@
 package org.example.djajbladibackend.controller.admin;
 
 import jakarta.validation.Valid;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.stock.StockItemCreateRequest;
 import org.example.djajbladibackend.dto.stock.StockItemResponse;
 import org.example.djajbladibackend.services.stock.StockService;
@@ -10,8 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
@@ -39,8 +38,10 @@ public class AdminStockController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StockItemResponse>> findAll() {
-        return ResponseEntity.ok(stockService.findAll());
+    public ResponseEntity<PageResponse<StockItemResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(stockService.findAll(page, size));
     }
 
     @GetMapping("/{id}")
