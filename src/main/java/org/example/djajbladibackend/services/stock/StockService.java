@@ -1,16 +1,15 @@
 package org.example.djajbladibackend.services.stock;
 
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.stock.StockItemCreateRequest;
 import org.example.djajbladibackend.dto.stock.StockItemResponse;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.models.StockItem;
 import org.example.djajbladibackend.repository.StockItemRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -44,10 +43,11 @@ public class StockService {
         return toResponse(item);
     }
 
-    public List<StockItemResponse> findAll() {
-        return stockItemRepository.findAllByOrderByTypeAscNameAsc().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<StockItemResponse> findAll(int page, int size) {
+        return PageResponse.from(
+                stockItemRepository.findAllByOrderByTypeAscNameAsc(PageRequest.of(page, size))
+                        .map(this::toResponse)
+        );
     }
 
     private StockItemResponse toResponse(StockItem item) {

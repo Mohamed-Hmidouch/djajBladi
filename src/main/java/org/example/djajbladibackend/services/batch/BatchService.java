@@ -2,8 +2,7 @@ package org.example.djajbladibackend.services.batch;
 
 import org.example.djajbladibackend.dto.batch.BatchCreateRequest;
 import org.example.djajbladibackend.dto.batch.BatchResponse;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.exception.DuplicateBatchNumberException;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.models.Batch;
@@ -12,6 +11,7 @@ import org.example.djajbladibackend.models.Building;
 import org.example.djajbladibackend.repository.BatchRepository;
 import org.example.djajbladibackend.repository.BuildingRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,11 +56,11 @@ public class BatchService {
         return toResponse(saved);
     }
 
-    public List<BatchResponse> findAll() {
-        return batchRepository.findAllWithCreatedByAndBuildingOrderByCreatedAtDesc()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<BatchResponse> findAll(int page, int size) {
+        return PageResponse.from(
+                batchRepository.findAllWithRelationsPageable(PageRequest.of(page, size))
+                        .map(this::toResponse)
+        );
     }
 
     public BatchResponse findById(Long id) {

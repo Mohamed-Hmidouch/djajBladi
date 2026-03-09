@@ -2,15 +2,14 @@ package org.example.djajbladibackend.services.building;
 
 import org.example.djajbladibackend.dto.building.BuildingRequest;
 import org.example.djajbladibackend.dto.building.BuildingResponse;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.models.Building;
 import org.example.djajbladibackend.repository.BuildingRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -43,8 +42,11 @@ public class BuildingService {
         return toResponse(b);
     }
 
-    public List<BuildingResponse> findAll() {
-        return buildingRepository.findAll().stream().map(this::toResponse).collect(Collectors.toList());
+    public PageResponse<BuildingResponse> findAll(int page, int size) {
+        return PageResponse.from(
+                buildingRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
+                        .map(this::toResponse)
+        );
     }
 
     private BuildingResponse toResponse(Building b) {

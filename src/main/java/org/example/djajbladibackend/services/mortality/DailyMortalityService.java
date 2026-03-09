@@ -1,5 +1,6 @@
 package org.example.djajbladibackend.services.mortality;
 
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.mortality.DailyMortalityRequest;
 import org.example.djajbladibackend.dto.mortality.DailyMortalityResponse;
 import org.example.djajbladibackend.exception.BatchNotActiveException;
@@ -17,6 +18,7 @@ import org.example.djajbladibackend.repository.BatchRepository;
 import org.example.djajbladibackend.repository.DailyMortalityRecordRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,6 +123,26 @@ public class DailyMortalityService {
             records = mortalityRepository.findByRecordDateBetweenWithRelations(start, end);
         }
         return records.stream().map(this::toResponse).toList();
+    }
+
+    public PageResponse<DailyMortalityResponse> findByDateRangePaged(LocalDate start, LocalDate end, Long batchId, int page, int size) {
+        if (start.isAfter(end)) {
+            throw new InvalidDataException("Start date must be before or equal to end date");
+        }
+        if (java.time.temporal.ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
+            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+        }
+        var pageable = PageRequest.of(page, size);
+        if (batchId != null) {
+            return PageResponse.from(
+                    mortalityRepository.findByBatchIdAndDateRangePageable(batchId, start, end, pageable)
+                            .map(this::toResponse)
+            );
+        }
+        return PageResponse.from(
+                mortalityRepository.findByDateRangePageable(start, end, pageable)
+                        .map(this::toResponse)
+        );
     }
 
     private DailyMortalityResponse toResponse(DailyMortalityRecord r) {
