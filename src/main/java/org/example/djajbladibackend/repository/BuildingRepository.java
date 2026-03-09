@@ -1,6 +1,8 @@
 package org.example.djajbladibackend.repository;
 
 import org.example.djajbladibackend.models.Building;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +14,6 @@ public interface BuildingRepository extends JpaRepository<Building, Long> {
     Optional<Building> findByName(String name);
 
     boolean existsByName(String name);
+
+    Page<Building> findAllByOrderByCreatedAtDesc(Pageable pageable);
 }

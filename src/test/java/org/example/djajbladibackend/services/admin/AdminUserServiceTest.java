@@ -19,7 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
-import org.springframework.data.domain.Sort;
+import org.example.djajbladibackend.dto.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
@@ -195,27 +198,28 @@ class AdminUserServiceTest {
     }
 
     @Test
-    @DisplayName("✅ getAllUsers should return all users ordered by createdAt desc")
+    @DisplayName("getAllUsers should return paginated users")
     void getAllUsers_Success() {
+        Page<User> userPage = new PageImpl<>(List.of(ouvrierUser, adminUser));
         when(userRepository.findByEmail("admin@djajbladi.com")).thenReturn(Optional.of(adminUser));
-        when(userRepository.findAll(any(Sort.class))).thenReturn(List.of(ouvrierUser, adminUser));
+        when(userRepository.findAll(any(Pageable.class))).thenReturn(userPage);
 
-        List<UserResponse> list = adminUserService.getAllUsers("admin@djajbladi.com");
+        PageResponse<UserResponse> result = adminUserService.getAllUsers("admin@djajbladi.com", 0, 5);
 
-        assertNotNull(list);
-        assertEquals(2, list.size());
-        assertEquals(ouvrierUser.getId(), list.get(0).getId());
-        assertEquals(adminUser.getId(), list.get(1).getId());
-        verify(userRepository, times(1)).findAll(any(Sort.class));
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        assertEquals(ouvrierUser.getId(), result.getContent().get(0).getId());
+        assertEquals(adminUser.getId(), result.getContent().get(1).getId());
+        verify(userRepository, times(1)).findAll(any(Pageable.class));
     }
 
     @Test
-    @DisplayName("❌ getAllUsers should throw when admin email not found")
+    @DisplayName("getAllUsers should throw when admin email not found")
     void getAllUsers_AdminNotFound() {
         when(userRepository.findByEmail("unknown@djajbladi.com")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () ->
-                adminUserService.getAllUsers("unknown@djajbladi.com"));
-        verify(userRepository, never()).findAll(any(Sort.class));
+                adminUserService.getAllUsers("unknown@djajbladi.com", 0, 5));
+        verify(userRepository, never()).findAll(any(Pageable.class));
     }
 }
