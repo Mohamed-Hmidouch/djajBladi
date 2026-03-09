@@ -2,6 +2,8 @@ package org.example.djajbladibackend.repository;
 
 import org.example.djajbladibackend.models.Batch;
 import org.example.djajbladibackend.models.BatchStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -68,4 +70,8 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<Batch> findAllWithCreatedByAndBuildingOrderByCreatedAtDesc();
 
     List<Batch> findByStatus(BatchStatus status);
+
+    @Query(value = "SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy LEFT JOIN FETCH b.building ORDER BY b.createdAt DESC",
+           countQuery = "SELECT COUNT(b) FROM Batch b")
+    Page<Batch> findAllWithRelationsPageable(Pageable pageable);
 }

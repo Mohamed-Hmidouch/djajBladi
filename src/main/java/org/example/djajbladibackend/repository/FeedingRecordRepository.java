@@ -1,6 +1,8 @@
 package org.example.djajbladibackend.repository;
 
 import org.example.djajbladibackend.models.FeedingRecord;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,7 +18,6 @@ import java.util.Optional;
 @Repository
 public interface FeedingRecordRepository extends JpaRepository<FeedingRecord, Long> {
 
-    // Spring Boot Best Practice: JOIN FETCH pour charger relations
     @Query("SELECT f FROM FeedingRecord f " +
             "LEFT JOIN FETCH f.batch " +
             "LEFT JOIN FETCH f.recordedBy " +
@@ -47,6 +48,35 @@ public interface FeedingRecordRepository extends JpaRepository<FeedingRecord, Lo
             @Param("batchId") Long batchId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
+    );
+
+    @Query(value = "SELECT f FROM FeedingRecord f " +
+            "LEFT JOIN FETCH f.batch " +
+            "LEFT JOIN FETCH f.recordedBy " +
+            "WHERE f.feedingDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY f.feedingDate DESC",
+           countQuery = "SELECT COUNT(f) FROM FeedingRecord f " +
+            "WHERE f.feedingDate BETWEEN :startDate AND :endDate")
+    Page<FeedingRecord> findByDateRangePageable(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
+    );
+
+    @Query(value = "SELECT f FROM FeedingRecord f " +
+            "LEFT JOIN FETCH f.batch " +
+            "LEFT JOIN FETCH f.recordedBy " +
+            "WHERE f.batch.id = :batchId " +
+            "AND f.feedingDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY f.feedingDate DESC",
+           countQuery = "SELECT COUNT(f) FROM FeedingRecord f " +
+            "WHERE f.batch.id = :batchId " +
+            "AND f.feedingDate BETWEEN :startDate AND :endDate")
+    Page<FeedingRecord> findByBatchIdAndDateRangePageable(
+            @Param("batchId") Long batchId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable
     );
 
     List<FeedingRecord> findByBatchId(Long batchId);

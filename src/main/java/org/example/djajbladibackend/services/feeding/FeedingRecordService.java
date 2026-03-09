@@ -1,6 +1,7 @@
 package org.example.djajbladibackend.services.feeding;
 
 import lombok.extern.slf4j.Slf4j;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.feeding.FeedingRecordRequest;
 import org.example.djajbladibackend.dto.feeding.FeedingRecordResponse;
 import org.example.djajbladibackend.exception.BatchNotActiveException;
@@ -20,6 +21,7 @@ import org.example.djajbladibackend.repository.FeedingRecordRepository;
 import org.example.djajbladibackend.repository.StockItemRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,6 +150,26 @@ public class FeedingRecordService {
             records = feedingRepository.findByFeedingDateBetweenWithRelations(start, end);
         }
         return records.stream().map(this::toResponse).toList();
+    }
+
+    public PageResponse<FeedingRecordResponse> findByDateRangePaged(LocalDate start, LocalDate end, Long batchId, int page, int size) {
+        if (start.isAfter(end)) {
+            throw new InvalidDataException("Start date must be before or equal to end date");
+        }
+        if (ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
+            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+        }
+        var pageable = PageRequest.of(page, size);
+        if (batchId != null) {
+            return PageResponse.from(
+                    feedingRepository.findByBatchIdAndDateRangePageable(batchId, start, end, pageable)
+                            .map(this::toResponse)
+            );
+        }
+        return PageResponse.from(
+                feedingRepository.findByDateRangePageable(start, end, pageable)
+                        .map(this::toResponse)
+        );
     }
 
     private FeedingRecordResponse toResponse(FeedingRecord r) {

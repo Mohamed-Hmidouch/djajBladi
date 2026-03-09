@@ -1,6 +1,7 @@
 package org.example.djajbladibackend.services.admin;
 
 import org.example.djajbladibackend.dto.admin.CreateUserRequest;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.user.UserResponse;
 import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
 import org.example.djajbladibackend.exception.InvalidRoleForAdminCreationException;
@@ -10,11 +11,12 @@ import org.example.djajbladibackend.models.User;
 import org.example.djajbladibackend.models.enums.RoleEnum;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_EMAIL_EXISTS;
 import static org.example.djajbladibackend.config.RedisCacheConfig.CACHE_USERS;
@@ -71,17 +73,14 @@ public class AdminUserService {
         return toUserResponse(saved);
     }
 
-    /**
-     * Returns all users (Admin only). Verifies the caller is a valid user.
-     */
-    public List<UserResponse> getAllUsers(String adminEmail) {
+    public PageResponse<UserResponse> getAllUsers(String adminEmail, int page, int size) {
         userRepository.findByEmail(adminEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        return userRepository.findAll(sort).stream()
-                .map(this::toUserResponse)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<UserResponse> result = userRepository.findAll(pageable)
+                .map(this::toUserResponse);
+        return PageResponse.from(result);
     }
 
     private UserResponse toUserResponse(User u) {

@@ -3,6 +3,7 @@ package org.example.djajbladibackend.controller.admin;
 import jakarta.validation.Valid;
 import org.example.djajbladibackend.dto.batch.BatchCreateRequest;
 import org.example.djajbladibackend.dto.batch.BatchResponse;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.services.batch.BatchService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 /**
  * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
@@ -27,9 +27,10 @@ public class AdminBatchController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BatchResponse>> findAll() {
-        List<BatchResponse> batches = batchService.findAll();
-        return ResponseEntity.ok(batches);
+    public ResponseEntity<PageResponse<BatchResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(batchService.findAll(page, size));
     }
 
     @PostMapping

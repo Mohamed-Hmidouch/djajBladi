@@ -3,6 +3,7 @@ package org.example.djajbladibackend.controller.admin;
 import jakarta.validation.Valid;
 import org.example.djajbladibackend.dto.building.BuildingRequest;
 import org.example.djajbladibackend.dto.building.BuildingResponse;
+import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.services.building.BuildingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,8 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * ✅ Security Best Practice: @PreAuthorize au niveau classe pour ADMIN
@@ -39,8 +38,10 @@ public class AdminBuildingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BuildingResponse>> findAll() {
-        return ResponseEntity.ok(buildingService.findAll());
+    public ResponseEntity<PageResponse<BuildingResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(buildingService.findAll(page, size));
     }
 
     @GetMapping("/{id}")
