@@ -82,4 +82,15 @@ public interface FeedingRecordRepository extends JpaRepository<FeedingRecord, Lo
     List<FeedingRecord> findByBatchId(Long batchId);
 
     List<FeedingRecord> findByFeedingDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Charge les enregistrements d'alimentation d'un lot avec le stock item lie
+     * pour le calcul du cout de revient alimentaire.
+     */
+    @Query("SELECT f FROM FeedingRecord f " +
+            "LEFT JOIN FETCH f.batch " +
+            "LEFT JOIN FETCH f.stockItem " +
+            "LEFT JOIN FETCH f.recordedBy " +
+            "WHERE f.batch.id = :batchId")
+    List<FeedingRecord> findByBatchIdWithStockItem(@Param("batchId") Long batchId);
 }

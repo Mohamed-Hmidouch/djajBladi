@@ -15,6 +15,7 @@ public class StockItemResponse {
     private String name;
     private BigDecimal quantity;
     private String unit;
+    private BigDecimal unitPrice;
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -31,6 +31,7 @@ public class StockService {
                 .name(req.getName())
                 .quantity(req.getQuantity())
                 .unit(req.getUnit())
+                .unitPrice(req.getUnitPrice())
                 .createdBy(createdBy)
                 .build();
         StockItem saved = stockItemRepository.save(item);
@@ -57,6 +58,7 @@ public class StockService {
                 .name(item.getName())
                 .quantity(item.getQuantity())
                 .unit(item.getUnit())
+                .unitPrice(item.getUnitPrice())
                 .createdAt(item.getCreatedAt())
                 .updatedAt(item.getUpdatedAt())
                 .build();
