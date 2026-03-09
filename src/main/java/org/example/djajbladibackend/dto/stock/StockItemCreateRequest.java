@@ -25,4 +25,7 @@ public class StockItemCreateRequest {
     @NotBlank(message = "Unit is required")
     @Size(max = 50)
     private String unit;
+
+    @DecimalMin(value = "0", inclusive = false, message = "Unit price must be positive")
+    private BigDecimal unitPrice;
 }
