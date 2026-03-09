@@ -72,4 +72,7 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Long
     List<HealthRecord> findByVeterinarianId(Long veterinarianId);
 
     List<HealthRecord> findByExaminationDateBetween(LocalDate startDate, LocalDate endDate);
+
+    @Query("SELECT COALESCE(SUM(h.treatmentCost), 0) FROM HealthRecord h WHERE h.batch.id = :batchId")
+    java.math.BigDecimal sumTreatmentCostByBatchId(@Param("batchId") Long batchId);
 }

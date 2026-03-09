@@ -37,6 +37,9 @@ public class StockItem {
     @Column(nullable = false, length = 50)
     private String unit;
 
+    @Column(name = "unit_price", precision = 12, scale = 2)
+    private BigDecimal unitPrice;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
     private User createdBy;

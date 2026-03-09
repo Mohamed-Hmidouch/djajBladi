@@ -79,4 +79,7 @@ public interface DailyMortalityRecordRepository extends JpaRepository<DailyMorta
             @Param("endDate") LocalDate endDate,
             Pageable pageable
     );
+
+    @Query("SELECT COALESCE(SUM(d.mortalityCount), 0) FROM DailyMortalityRecord d WHERE d.batch.id = :batchId")
+    Integer sumMortalityByBatchId(@Param("batchId") Long batchId);
 }

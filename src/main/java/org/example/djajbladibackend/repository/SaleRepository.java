@@ -74,4 +74,12 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     List<Sale> findByPaymentStatus(PaymentStatus paymentStatus);
 
     List<Sale> findBySaleDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * Revenu total des ventes non annulees pour un lot donne.
+     * Utilise pour le calcul du benefice estime.
+     */
+    @Query("SELECT COALESCE(SUM(s.totalPrice), 0) FROM Sale s " +
+            "WHERE s.batch.id = :batchId AND s.paymentStatus != 'Cancelled'")
+    java.math.BigDecimal sumRevenuByBatchId(@Param("batchId") Long batchId);
 }
