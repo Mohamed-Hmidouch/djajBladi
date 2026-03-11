@@ -1,5 +1,6 @@
 package org.example.djajbladibackend.services.admin;
 
+import org.example.djajbladibackend.dto.admin.AdminChangePasswordRequest;
 import org.example.djajbladibackend.dto.admin.CreateUserRequest;
 import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.user.UserResponse;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,11 +30,14 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final UserFactory userFactory;
     private final CacheManager cacheManager;
+    private final PasswordEncoder passwordEncoder;
 
-    public AdminUserService(UserRepository userRepository, UserFactory userFactory, CacheManager cacheManager) {
+    public AdminUserService(UserRepository userRepository, UserFactory userFactory,
+                            CacheManager cacheManager, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userFactory = userFactory;
         this.cacheManager = cacheManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -71,6 +76,21 @@ public class AdminUserService {
         if (emailExistsCache != null) emailExistsCache.evict(req.getEmail());
 
         return toUserResponse(saved);
+    }
+
+    @Transactional
+    public void adminForceChangePassword(Long targetUserId, AdminChangePasswordRequest req, String adminEmail) {
+        userRepository.findByEmail(adminEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found: " + adminEmail));
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + targetUserId));
+
+        target.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        userRepository.save(target);
+
+        var usersCache = cacheManager.getCache(CACHE_USERS);
+        if (usersCache != null) usersCache.evict(target.getEmail());
     }
 
     public PageResponse<UserResponse> getAllUsers(String adminEmail, int page, int size) {

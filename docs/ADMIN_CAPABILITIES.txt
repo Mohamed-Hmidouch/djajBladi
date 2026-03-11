@@ -1,0 +1,139 @@
+============================================================
+DJAJ BLADI - CAPACITES DU ROLE ADMIN
+Analyse complete au 09 Mars 2026
+============================================================
+
+L'administrateur dispose d'un acces complet a toutes les
+fonctionnalites de la plateforme. Voici ce qu'il peut faire :
+
+
+------------------------------------------------------------
+1. GESTION DES UTILISATEURS
+   Route backend : GET/POST /api/admin/users
+   Page frontend : /dashboard/admin/users
+------------------------------------------------------------
+
+- Voir la liste paginee de tous les utilisateurs du systeme
+- Creer un nouveau compte utilisateur avec les informations :
+    nom complet, email, mot de passe, telephone, role, sexe
+- Attribuer un role parmi : Admin, Ouvrier, Veterinaire
+- Voir le statut actif/inactif de chaque utilisateur
+- Voir le role et l'avatar de chaque membre de l'equipe
+
+
+------------------------------------------------------------
+2. GESTION DES BATIMENTS
+   Route backend : GET/POST/GET(id) /api/admin/buildings
+   Page frontend : /dashboard/admin/buildings
+------------------------------------------------------------
+
+- Voir la liste paginee de tous les batiments d'elevage
+- Creer un nouveau batiment avec : nom, capacite, description, image
+- Voir les details d'un batiment specifique (id)
+- Visualiser la capacite et l'etat de chaque installation
+- Voir l'occupation de chaque batiment via un graphique donut
+
+
+------------------------------------------------------------
+3. GESTION DES LOTS DE POUSSINS
+   Route backend : GET/POST /api/admin/batches
+   Page frontend : /dashboard/admin/batches
+------------------------------------------------------------
+
+- Voir la liste paginee de tous les lots (actifs, termines, vendus)
+- Creer un nouveau lot avec : numero, souche (strain), date d'arrivee,
+    nombre de poussins, prix d'achat unitaire, batiment associe
+- Voir les statistiques de chaque lot (mortalite, FCR mini-chart)
+- Suivre le statut de chaque lot : Active / Completed / Sold
+
+
+------------------------------------------------------------
+4. GESTION DU STOCK ET DISTRIBUTIONS
+   Route backend : GET/POST /api/admin/stock
+   Page frontend : /dashboard/admin/stock
+------------------------------------------------------------
+
+- Voir l'inventaire complet paginee (aliments, vaccins, vitamines)
+- Ajouter un nouvel article au stock avec : type, nom, quantite,
+    unite, prix unitaire (pour calcul financier)
+- Voir le detail d'un article specifique
+- Enregistrer une distribution d'aliment a un lot :
+    choix du lot, du stock item, quantite, type d'aliment
+    avec deduction automatique du stock disponible
+- Voir l'historique paginee de toutes les distributions
+- Verification de disponibilite du stock avant distribution
+
+
+------------------------------------------------------------
+5. SUPERVISION ET TABLEAU DE BORD
+   Route backend : GET /api/admin/dashboard/supervision
+                   GET /api/admin/dashboard/fcr
+                   GET /api/admin/dashboard/alerts
+                   POST /api/admin/dashboard/health-records/{id}/approve
+                   POST /api/admin/dashboard/health-records/{id}/reject
+   Page frontend : /dashboard/admin/supervision (en cours)
+------------------------------------------------------------
+
+- Voir le tableau de bord global de supervision
+- Consulter les indices FCR (Food Conversion Ratio) de tous les lots
+- Voir les alertes sanitaires en attente (signalees par les veterinaires)
+- Approuver ou rejeter un enregistrement de sante (rapport veterinaire)
+
+
+------------------------------------------------------------
+6. CALCUL DU COUT DE REVIENT (FINANCIER)
+   Route backend : GET /api/admin/batches/{id}/cost?fixedCharges=X
+   Page frontend : /dashboard/admin/finances
+------------------------------------------------------------
+
+- Selectionner un lot et calculer son cout de revient complet
+- Saisir des charges fixes optionnelles (loyer, electricite, etc.)
+- Voir la decomposition detaillee des couts :
+    * Achat poussins = nombre initial x prix unitaire poussin
+    * Alimentation   = somme(quantite distribuee x prix unitaire aliment)
+    * Medicaments    = somme des couts de traitement (fiches veterinaires)
+    * Charges fixes  = montant saisi manuellement
+    * TOTAL = somme des 4 postes ci-dessus
+- Voir le cout par tete (total / nombre de survivants)
+- Voir le revenu total encaisse (ventes payees, hors annulees)
+- Voir le profit estime et la marge en pourcentage
+- Voir le detail ligne par ligne des aliments distribues :
+    nom du stock, type d'aliment, quantite totale, prix unitaire, sous-total
+- Voir l'etat de l'effectif : initial / mortalite / survivants
+
+
+------------------------------------------------------------
+7. GESTION DU PROFIL PERSONNEL
+   Route backend : GET/PUT /api/profile
+   Page frontend : accessible depuis le menu utilisateur
+------------------------------------------------------------
+
+- Voir et modifier ses informations personnelles
+- Changer son mot de passe
+- Mettre a jour son telephone et ses preferences
+
+
+------------------------------------------------------------
+RESUME DES MODULES ACCESSIBLES PAR L'ADMIN
+------------------------------------------------------------
+
+  Module             | Lire | Creer | Modifier | Supprimer
+  -------------------|------|-------|----------|----------
+  Utilisateurs       |  Oui |  Oui  |    Non   |    Non
+  Batiments          |  Oui |  Oui  |    Non   |    Non
+  Lots               |  Oui |  Oui  |    Non   |    Non
+  Stock              |  Oui |  Oui  |    Non   |    Non
+  Distributions      |  Oui |  Oui  |    Non   |    Non
+  Supervision/FCR    |  Oui |   -   |    Oui   |    Non
+  Alertes sante      |  Oui |   -   | Approuv/ |    Non
+                     |      |       | Rejet    |
+  Finances/CdR       |  Oui |   -   |    -     |    Non
+  Profil perso       |  Oui |   -   |    Oui   |    Non
+
+------------------------------------------------------------
+NOTE : Le role Ouvrier peut uniquement enregistrer des
+distributions d'aliments et des mortalites journalieres.
+Le role Veterinaire peut uniquement creer et gerer les
+fiches sanitaires (diagnostics, traitements, vaccinations).
+Seul l'Admin voit le tableau financier complet.
+============================================================
