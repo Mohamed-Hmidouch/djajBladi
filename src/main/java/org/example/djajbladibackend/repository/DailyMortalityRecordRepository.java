@@ -82,4 +82,29 @@ public interface DailyMortalityRecordRepository extends JpaRepository<DailyMorta
 
     @Query("SELECT COALESCE(SUM(d.mortalityCount), 0) FROM DailyMortalityRecord d WHERE d.batch.id = :batchId")
     Integer sumMortalityByBatchId(@Param("batchId") Long batchId);
+
+    @Query("SELECT d FROM DailyMortalityRecord d " +
+            "LEFT JOIN FETCH d.batch " +
+            "LEFT JOIN FETCH d.recordedBy " +
+            "WHERE d.source = :source " +
+            "AND d.recordDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY d.recordDate DESC")
+    List<DailyMortalityRecord> findBySourceAndDateBetween(
+            @Param("source") org.example.djajbladibackend.models.MortalitySource source,
+            @Param("startDate") java.time.LocalDate startDate,
+            @Param("endDate") java.time.LocalDate endDate);
+
+    @Query("SELECT d FROM DailyMortalityRecord d " +
+            "LEFT JOIN FETCH d.batch " +
+            "LEFT JOIN FETCH d.recordedBy " +
+            "WHERE d.batch.id = :batchId AND d.source = :source " +
+            "ORDER BY d.recordDate DESC")
+    List<DailyMortalityRecord> findByBatchIdAndSource(
+            @Param("batchId") Long batchId,
+            @Param("source") org.example.djajbladibackend.models.MortalitySource source);
+
+    boolean existsByBatchIdAndRecordDateAndSource(
+            Long batchId,
+            java.time.LocalDate recordDate,
+            org.example.djajbladibackend.models.MortalitySource source);
 }

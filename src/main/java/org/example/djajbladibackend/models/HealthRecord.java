@@ -20,7 +20,9 @@ import java.util.Objects;
         @Index(name = "idx_health_batch", columnList = "batch_id"),
         @Index(name = "idx_health_veterinarian", columnList = "veterinarian_id"),
         @Index(name = "idx_health_examination_date", columnList = "examination_date"),
-        @Index(name = "idx_health_next_visit", columnList = "next_visit_date")
+        @Index(name = "idx_health_next_visit", columnList = "next_visit_date"),
+        @Index(name = "idx_health_withdrawal", columnList = "batch_id, withdrawal_days, is_vaccination"),
+        @Index(name = "idx_health_stock_item", columnList = "stock_item_id")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -62,6 +64,20 @@ public class HealthRecord {
 
     @Column(name = "treatment_cost", precision = 12, scale = 2)
     private BigDecimal treatmentCost;
+
+    @Column(name = "withdrawal_days")
+    private Integer withdrawalDays;
+
+    @Column(name = "is_vaccination", nullable = false)
+    @Builder.Default
+    private Boolean isVaccination = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_item_id")
+    private StockItem stockItem;
+
+    @Column(name = "quantity_used", precision = 12, scale = 4)
+    private BigDecimal quantityUsed;
 
     @Column(name = "requires_approval", nullable = false)
     @Builder.Default
@@ -110,5 +126,34 @@ public class HealthRecord {
 
     public boolean hasMortality() {
         return mortalityCount != null && mortalityCount > 0;
+    }
+
+    /**
+     * Calculates the withdrawal expiration date based on examination date and withdrawal days.
+     * Returns null if withdrawalDays is null or zero.
+     *
+     * @return the withdrawal expiration date, or null if no withdrawal period
+     */
+    public LocalDate getWithdrawalExpirationDate() {
+        if (withdrawalDays == null || withdrawalDays == 0) {
+            return null;
+        }
+        return examinationDate.plusDays(withdrawalDays);
+    }
+
+    /**
+     * Checks if this health record has an active withdrawal period.
+     * A withdrawal period is active if:
+     * - This is not a vaccination record (isVaccination = false)
+     * - The current date is before the withdrawal expiration date
+     *
+     * @return true if the withdrawal period is active, false otherwise
+     */
+    public boolean hasActiveWithdrawalPeriod() {
+        if (Boolean.TRUE.equals(isVaccination)) {
+            return false;
+        }
+        LocalDate expiration = getWithdrawalExpirationDate();
+        return expiration != null && LocalDate.now().isBefore(expiration);
     }
 }

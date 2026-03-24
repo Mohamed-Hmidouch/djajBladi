@@ -15,6 +15,7 @@ public class BatchResponse {
     private String batchNumber;
     private String strain;
     private Integer chickenCount;
+    private Integer currentCount;
     private LocalDate arrivalDate;
     private BigDecimal purchasePrice;
     private Long buildingId;
@@ -24,4 +25,6 @@ public class BatchResponse {
     private Long createdById;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long assignedToId;
+    private String assignedToName;
 }

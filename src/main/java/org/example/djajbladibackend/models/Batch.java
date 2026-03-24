@@ -23,7 +23,8 @@ import java.util.Objects;
         @Index(name = "idx_batch_status", columnList = "status"),
         @Index(name = "idx_batch_arrival_date", columnList = "arrival_date"),
         @Index(name = "idx_batch_created_by", columnList = "created_by_id"),
-        @Index(name = "idx_batch_building", columnList = "building_id")
+        @Index(name = "idx_batch_building", columnList = "building_id"),
+        @Index(name = "idx_batch_assigned_to", columnList = "assigned_to_id")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -42,6 +43,9 @@ public class Batch {
 
     @Column(name = "chicken_count", nullable = false)
     private Integer chickenCount;
+
+    @Column(name = "current_count")
+    private Integer currentCount;
 
     @Column(name = "arrival_date", nullable = false)
     private LocalDate arrivalDate;
@@ -66,6 +70,10 @@ public class Batch {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     private User createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_id", nullable = false)
+    private User assignedTo;
 
     // Spring Boot Best Practice: LAZY fetch pour collections
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -103,6 +111,13 @@ public class Batch {
     }
 
     // Méthodes utilitaires
+    @PrePersist
+    public void initializeCurrentCount() {
+        if (currentCount == null && chickenCount != null) {
+            currentCount = chickenCount;
+        }
+    }
+
     public boolean isActive() {
         return status == BatchStatus.Active;
     }

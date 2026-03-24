@@ -320,6 +320,37 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(WithdrawalPeriodActiveException.class)
+    public ProblemDetail handleWithdrawalPeriodActive(WithdrawalPeriodActiveException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Withdrawal Period Active");
+        problemDetail.setProperty("batchId", ex.getBatchId());
+        problemDetail.setProperty("expirationDate", ex.getExpirationDate());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Sale blocked by withdrawal period: batchId={}, expirationDate={}",
+            ex.getBatchId(), ex.getExpirationDate());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DuplicateVaccinationProtocolException.class)
+    public ProblemDetail handleDuplicateVaccinationProtocol(DuplicateVaccinationProtocolException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Duplicate Vaccination Protocol");
+        problemDetail.setProperty("strain", ex.getStrain());
+        problemDetail.setProperty("vaccineName", ex.getVaccineName());
+        problemDetail.setProperty("dayOfLife", ex.getDayOfLife());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Duplicate vaccination protocol: strain={}, vaccine={}, day={}",
+            ex.getStrain(), ex.getVaccineName(), ex.getDayOfLife());
+        return problemDetail;
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String message = ex.getMessage();

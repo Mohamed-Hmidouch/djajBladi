@@ -64,7 +64,7 @@ class BatchCostServiceTest {
         stockItemFeed = StockItem.builder()
                 .id(10L)
                 .name("Aliment Demarrage")
-                .type(StockType.Feed)
+                .type(StockType.FEED)
                 .unit("kg")
                 .unitPrice(BigDecimal.valueOf(3.5))
                 .build();
@@ -159,7 +159,7 @@ class BatchCostServiceTest {
         StockItem itemWithoutPrice = StockItem.builder()
                 .id(20L)
                 .name("Aliment sans prix")
-                .type(StockType.Feed)
+                .type(StockType.FEED)
                 .unit("kg")
                 .unitPrice(null)
                 .build();

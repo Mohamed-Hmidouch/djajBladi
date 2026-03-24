@@ -11,7 +11,10 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "stock_items", indexes = { @Index(name = "idx_stock_type", columnList = "type") })
+@Table(name = "stock_items", indexes = {
+        @Index(name = "idx_stock_type", columnList = "type"),
+        @Index(name = "idx_stock_type_category", columnList = "stock_type")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
@@ -28,6 +31,11 @@ public class StockItem {
     @Column(nullable = false, length = 20)
     private StockType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stock_type", nullable = false, length = 20)
+    @Builder.Default
+    private StockType stockType = StockType.MEDICATION;
+
     @Column(length = 200)
     private String name;
 
@@ -37,7 +45,7 @@ public class StockItem {
     @Column(nullable = false, length = 50)
     private String unit;
 
-    @Column(name = "unit_price", precision = 12, scale = 2)
+    @Column(name = "unit_price", precision = 12, scale = 4)
     private BigDecimal unitPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)

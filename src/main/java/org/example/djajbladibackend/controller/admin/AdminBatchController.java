@@ -50,6 +50,14 @@ public class AdminBatchController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<BatchResponse> update(
+            @PathVariable Long id,
+            @Valid @RequestBody org.example.djajbladibackend.dto.batch.BatchUpdateRequest request) {
+        BatchResponse updated = batchService.update(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
     /**
      * Calcul du cout de revient d'un lot.
      *
@@ -61,5 +69,19 @@ public class AdminBatchController {
             @PathVariable Long id,
             @RequestParam(required = false) BigDecimal fixedCharges) {
         return ResponseEntity.ok(batchCostService.calculateCost(id, fixedCharges));
+    }
+
+    /**
+     * Updates only the status of a batch.
+     * Enforces withdrawal period checks before transitioning to SOLD or READY_FOR_SALE.
+     * PATCH /api/admin/batches/{id}/status
+     */
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<BatchResponse> updateStatus(
+            @PathVariable Long id,
+            @RequestBody org.example.djajbladibackend.dto.batch.BatchUpdateRequest request) {
+        batchService.validateStatusTransition(id, request.getStatus());
+        BatchResponse updated = batchService.update(id, request);
+        return ResponseEntity.ok(updated);
     }
 }

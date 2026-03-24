@@ -6,5 +6,7 @@ package org.example.djajbladibackend.models;
 public enum BatchStatus {
     Active,
     Completed,
-    Archived
+    Archived,
+    SOLD,
+    READY_FOR_SALE
 }

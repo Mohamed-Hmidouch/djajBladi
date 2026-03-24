@@ -28,6 +28,13 @@ public class HealthRecordResponse {
     private String approvedByName;
     private LocalDateTime approvedAt;
     private String notes;
+    private Integer withdrawalDays;
+    private Boolean isVaccination;
+    private Long stockItemId;
+    private String stockItemName;
+    private BigDecimal quantityUsed;
+    private LocalDate withdrawalExpirationDate;
+    private Boolean hasActiveWithdrawalPeriod;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

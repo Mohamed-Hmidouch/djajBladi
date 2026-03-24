@@ -14,7 +14,9 @@ import java.util.Objects;
 @Table(name = "daily_mortality_records", indexes = {
         @Index(name = "idx_mortality_batch", columnList = "batch_id"),
         @Index(name = "idx_mortality_date", columnList = "record_date"),
-        @Index(name = "idx_mortality_recorded_by", columnList = "recorded_by_id")
+        @Index(name = "idx_mortality_recorded_by", columnList = "recorded_by_id"),
+        @Index(name = "idx_mortality_source", columnList = "source"),
+        @Index(name = "idx_mortality_health_record", columnList = "health_record_id")
 }, uniqueConstraints = @UniqueConstraint(name = "uq_mortality_batch_date", columnNames = {"batch_id", "record_date"}))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -44,6 +46,15 @@ public class DailyMortalityRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by_id", nullable = false)
     private User recordedBy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false, length = 30)
+    @Builder.Default
+    private MortalitySource source = MortalitySource.WORKER_REPORT;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "health_record_id")
+    private HealthRecord healthRecord;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -1,5 +1,6 @@
 package org.example.djajbladibackend.services.mortality;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.djajbladibackend.dto.common.PageResponse;
 import org.example.djajbladibackend.dto.mortality.DailyMortalityRequest;
 import org.example.djajbladibackend.dto.mortality.DailyMortalityResponse;
@@ -12,10 +13,13 @@ import org.example.djajbladibackend.exception.MortalityExceedsBatchSizeException
 import org.example.djajbladibackend.exception.ResourceNotFoundException;
 import org.example.djajbladibackend.models.Batch;
 import org.example.djajbladibackend.models.DailyMortalityRecord;
+import org.example.djajbladibackend.models.HealthRecord;
+import org.example.djajbladibackend.models.MortalitySource;
 import org.example.djajbladibackend.models.User;
 import org.example.djajbladibackend.models.enums.RoleEnum;
 import org.example.djajbladibackend.repository.BatchRepository;
 import org.example.djajbladibackend.repository.DailyMortalityRecordRepository;
+import org.example.djajbladibackend.repository.HealthRecordRepository;
 import org.example.djajbladibackend.repository.auth.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -27,21 +31,25 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
+@Slf4j
 public class DailyMortalityService {
 
     private final DailyMortalityRecordRepository mortalityRepository;
     private final BatchRepository batchRepository;
     private final UserRepository userRepository;
+    private final HealthRecordRepository healthRecordRepository;
 
     @Value("${app.supervision.max-date-range-days:366}")
     private int maxDateRangeDays;
 
     public DailyMortalityService(DailyMortalityRecordRepository mortalityRepository,
                                  BatchRepository batchRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 HealthRecordRepository healthRecordRepository) {
         this.mortalityRepository = mortalityRepository;
         this.batchRepository = batchRepository;
         this.userRepository = userRepository;
+        this.healthRecordRepository = healthRecordRepository;
     }
 
     @Transactional
@@ -76,6 +84,7 @@ public class DailyMortalityService {
                 .mortalityCount(req.getMortalityCount())
                 .notes(req.getNotes())
                 .recordedBy(user)
+                .source(MortalitySource.WORKER_REPORT)
                 .build();
         DailyMortalityRecord saved = mortalityRepository.save(record);
 
@@ -143,6 +152,56 @@ public class DailyMortalityService {
                 mortalityRepository.findByDateRangePageable(start, end, pageable)
                         .map(this::toResponse)
         );
+    }
+
+    /**
+     * Called by HealthRecordService when a veterinarian records mortality in a health examination.
+     * Atomically decrements batch current_count and creates a VETERINARIAN_EXAMINATION mortality record.
+     * Requirements: 3.1, 3.2, 3.3, 3.5, 3.6, 9.2
+     */
+    @Transactional
+    public void decrementStock(Long batchId, Integer mortalityCount, LocalDate recordDate, Long healthRecordId) {
+        if (mortalityCount == null || mortalityCount <= 0) {
+            throw new InvalidDataException("Mortality count must be > 0");
+        }
+        Batch batch = batchRepository.findById(batchId)
+                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + batchId));
+
+        int affected = batchRepository.decrementCurrentCount(batchId, mortalityCount);
+        if (affected == 0) {
+            throw new MortalityExceedsBatchSizeException(
+                    "Cannot decrement batch " + batchId + " by " + mortalityCount +
+                    ": current count is insufficient");
+        }
+
+        User systemUser = batch.getAssignedTo();
+
+        HealthRecord healthRecord = null;
+        if (healthRecordId != null) {
+            healthRecord = healthRecordRepository.findById(healthRecordId).orElse(null);
+        }
+
+        DailyMortalityRecord mortalityRecord = DailyMortalityRecord.builder()
+                .batch(batch)
+                .recordDate(recordDate)
+                .mortalityCount(mortalityCount)
+                .recordedBy(systemUser)
+                .source(MortalitySource.VETERINARIAN_EXAMINATION)
+                .healthRecord(healthRecord)
+                .build();
+        mortalityRepository.save(mortalityRecord);
+
+        log.info("Veterinarian mortality sync: batchId={}, count={}, date={}, healthRecordId={}",
+                batchId, mortalityCount, recordDate, healthRecordId);
+    }
+
+    /**
+     * Finds mortality records filtered by source and date range.
+     * Requirements: 9.4
+     */
+    public List<DailyMortalityResponse> findBySource(MortalitySource source, LocalDate startDate, LocalDate endDate) {
+        return mortalityRepository.findBySourceAndDateBetween(source, startDate, endDate)
+                .stream().map(this::toResponse).toList();
     }
 
     private DailyMortalityResponse toResponse(DailyMortalityRecord r) {

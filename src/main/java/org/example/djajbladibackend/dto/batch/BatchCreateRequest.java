@@ -34,4 +34,7 @@ public class BatchCreateRequest {
 
     @Size(max = 2000)
     private String notes;
+
+    @NotNull(message = "Assigned user is required")
+    private Long assignedToId;
 }

@@ -75,4 +75,37 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Long
 
     @Query("SELECT COALESCE(SUM(h.treatmentCost), 0) FROM HealthRecord h WHERE h.batch.id = :batchId")
     java.math.BigDecimal sumTreatmentCostByBatchId(@Param("batchId") Long batchId);
+
+    /**
+     * Returns health records for a batch that still have an active withdrawal period today.
+     * Only non-vaccination records with withdrawalDays > 0 where today < examinationDate + withdrawalDays.
+     */
+    @Query("SELECT h FROM HealthRecord h " +
+            "WHERE h.batch.id = :batchId " +
+            "AND h.withdrawalDays IS NOT NULL " +
+            "AND h.withdrawalDays > 0 " +
+            "AND h.isVaccination = false " +
+            "AND FUNCTION('ADDDATE', h.examinationDate, h.withdrawalDays) > CURRENT_DATE")
+    List<HealthRecord> findActiveWithdrawalPeriods(@Param("batchId") Long batchId);
+
+    /**
+     * Returns the latest withdrawal expiration date across all non-vaccination health records for a batch.
+     */
+    @Query("SELECT MAX(FUNCTION('ADDDATE', h.examinationDate, h.withdrawalDays)) " +
+            "FROM HealthRecord h " +
+            "WHERE h.batch.id = :batchId " +
+            "AND h.withdrawalDays IS NOT NULL " +
+            "AND h.withdrawalDays > 0 " +
+            "AND h.isVaccination = false")
+    java.time.LocalDate findLatestWithdrawalExpiration(@Param("batchId") Long batchId);
+
+    /**
+     * Returns vaccination health records for a batch matching a given vaccine name.
+     */
+    @Query("SELECT h FROM HealthRecord h " +
+            "WHERE h.batch.id = :batchId " +
+            "AND h.isVaccination = true " +
+            "AND LOWER(h.diagnosis) LIKE LOWER(CONCAT('%', :vaccineName, '%'))")
+    List<HealthRecord> findVaccinationRecords(@Param("batchId") Long batchId,
+                                              @Param("vaccineName") String vaccineName);
 }
