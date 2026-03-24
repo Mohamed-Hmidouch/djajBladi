@@ -1,59 +1,29 @@
 # Deploy to Azure VM via SSH
-# Triggers on push to main branch after tests pass
-# 
+# Triggers ONLY after CI workflow passes on main, or manually
+#
 # Required GitHub Secrets:
 #   AZURE_VM_HOST: IP or hostname of Azure VM
 #   AZURE_VM_USER: SSH username
 #   AZURE_VM_SSH_KEY: Private SSH key for authentication
+#   POSTGRES_PASSWORD: Production database password
+#   JWT_SECRET: Production JWT signing secret
 
 name: Deploy to Azure VM
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "CI" ]
+    types: [ completed ]
     branches: [ "main" ]
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: djaj_bladi
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Build and test
-        env:
-          SPRING_PROFILES_ACTIVE: noredis
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/djaj_bladi
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
-          JWT_SECRET: ci-test-secret-do-not-use-in-production
-        run: ./mvnw -B package --file pom.xml
-
   deploy:
-    needs: test
+    name: Deploy
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
 
     steps:
       - name: Deploy to Azure VM
@@ -65,7 +35,16 @@ jobs:
           script: |
             cd /opt/djaj-bladi/app
             git pull origin main
+
+            # Create .env from GitHub secrets
+            echo "POSTGRES_USER=postgres" > .env
+            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
+            # Rebuild and restart containers
             docker compose -f compose.prod.yaml down
             docker compose -f compose.prod.yaml up -d --build
+
+            # Show status
             docker compose -f compose.prod.yaml ps
-            echo "✅ Deployment complete!"
+            echo "Deployment complete"
