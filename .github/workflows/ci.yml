@@ -1,4 +1,4 @@
-# CI Pipeline: Test + Build Docker Image
+# CI Pipeline: Test + Coverage + Build Docker Image
 # Runs on every push/PR to main
 
 name: CI
@@ -11,10 +11,11 @@ on:
 
 jobs:
   # ------------------------------------------------------------------ #
-  # 1) Unit tests + Integration tests (with Postgres service container) #
+  # 1) Tests + JaCoCo coverage (with Postgres service container)        #
+  #    Quality gate: 40% line + branch on services + controllers        #
   # ------------------------------------------------------------------ #
   test:
-    name: Tests
+    name: Tests & Coverage
     runs-on: ubuntu-latest
 
     services:
@@ -43,7 +44,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run tests
+      - name: Run tests and generate coverage report
         env:
           SPRING_PROFILES_ACTIVE: ci
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/djaj_bladi
@@ -59,6 +60,47 @@ jobs:
           name: test-reports
           path: target/surefire-reports/
           retention-days: 7
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: target/site/jacoco/
+          retention-days: 7
+
+      - name: Post coverage summary on PR
+        if: github.event_name == 'pull_request'
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Coverage Report (services + controllers)"
+          min-coverage-overall: 40
+          min-coverage-changed-files: 40
+          update-comment: true
+
+      - name: Print coverage summary to job log
+        if: always()
+        run: |
+          if [ -f target/site/jacoco/jacoco.xml ]; then
+            echo "--- JaCoCo Coverage Summary ---"
+            grep -oP '(?<=<counter type="LINE" missed=")[0-9]+(?=" covered=")[0-9]+' target/site/jacoco/jacoco.xml || true
+            python3 - <<'EOF'
+          import xml.etree.ElementTree as ET
+          tree = ET.parse("target/site/jacoco/jacoco.xml")
+          root = tree.getroot()
+          for counter in root.findall("counter"):
+              ctype = counter.get("type")
+              missed = int(counter.get("missed", 0))
+              covered = int(counter.get("covered", 0))
+              total = missed + covered
+              pct = (covered / total * 100) if total > 0 else 0
+              print(f"{ctype:<12} {covered:>6}/{total:<6} ({pct:.1f}%)")
+          EOF
+          else
+            echo "No jacoco.xml found - coverage report was not generated"
+          fi
 
   # ------------------------------------------------------------------ #
   # 2) Build Docker image (proves the JAR + Dockerfile are valid)       #

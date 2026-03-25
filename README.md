@@ -1,5 +1,34 @@
 # djajBladi
 
+![CI](https://github.com/Mohamed-Hmidouch/djajBladi/actions/workflows/ci.yml/badge.svg)
+
+## Code Coverage
+
+Coverage is enforced automatically on every push and pull request via JaCoCo and GitHub Actions.
+
+| Scope | Counter | Minimum threshold |
+|-------|---------|-------------------|
+| `services/**` | Line + Branch | **40%** |
+| `controller/**` | Line + Branch | **40%** |
+
+- The build **fails** if any covered package falls below 40% line or branch coverage.
+- A full HTML report is generated at `target/site/jacoco/index.html` after each `mvn verify`.
+- On pull requests, a coverage summary comment is automatically posted by the CI pipeline.
+- Artifacts `test-reports` and `coverage-report` are uploaded for every CI run (retention: 7 days).
+
+To raise the threshold over time, edit `jacoco.minimum.coverage` in `pom.xml`:
+
+```xml
+<jacoco.minimum.coverage>0.40</jacoco.minimum.coverage>
+```
+
+To view the report locally:
+
+```bash
+./mvnw verify
+open target/site/jacoco/index.html
+```
+
 ## Run with Docker (one instance, no external DB)
 
 App + Postgres + Redis run together; no separate DB hosting.

@@ -31,6 +31,9 @@
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <dependency-check-maven.version>11.0.0</dependency-check-maven.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <!-- Coverage thresholds (services + controllers only) -->
+        <jacoco.minimum.coverage>0.40</jacoco.minimum.coverage>
     </properties>
     <dependencies>
         <dependency>
@@ -212,6 +215,75 @@
                         <location>filesystem:src/main/resources/db/migration</location>
                     </locations>
                 </configuration>
+            </plugin>
+            <!-- JaCoCo: code coverage instrumentation, report and quality gate -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <!-- 1. Instrument bytecode before tests run -->
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <!-- 2. Generate HTML + XML + CSV reports after tests -->
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <!-- 3. Quality gate: 40% line + branch on services and controllers only -->
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>PACKAGE</element>
+                                    <includes>
+                                        <include>org/example/djajbladibackend/services/**</include>
+                                        <include>org/example/djajbladibackend/controller/**</include>
+                                    </includes>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.minimum.coverage}</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.minimum.coverage}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <!-- Exclude Lombok, MapStruct generated code, DTOs, models, config -->
+                            <excludes>
+                                <exclude>org/example/djajbladibackend/dto/**</exclude>
+                                <exclude>org/example/djajbladibackend/models/**</exclude>
+                                <exclude>org/example/djajbladibackend/config/**</exclude>
+                                <exclude>org/example/djajbladibackend/security/**</exclude>
+                                <exclude>org/example/djajbladibackend/exception/**</exclude>
+                                <exclude>org/example/djajbladibackend/factory/**</exclude>
+                                <exclude>org/example/djajbladibackend/utils/**</exclude>
+                                <exclude>org/example/djajbladibackend/repository/**</exclude>
+                                <exclude>**/*MapperImpl.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
