@@ -56,31 +56,9 @@ SELECT 'LOT-2025-002',  4500, NOW()::DATE - INTERVAL '7 days',   'Active',    'L
 -- Batches 1 et 2 (Completed): 42 jours complets
 -- -----------------------------------------------------------------------
 
--- Feeding records use DO block to resolve IDs once
-DO $$
-DECLARE
-  v_admin     BIGINT := (SELECT id FROM users WHERE email = 'admin@djajbladi.ma');
-  v_ouvrier1  BIGINT := (SELECT id FROM users WHERE email = 'karim@djajbladi.ma');
-  v_ouvrier2  BIGINT := (SELECT id FROM users WHERE email = 'fatima@djajbladi.ma');
-  v_vet1      BIGINT := (SELECT id FROM users WHERE email = 'vet1@djajbladi.ma');
-  v_vet2      BIGINT := (SELECT id FROM users WHERE email = 'vet2@djajbladi.ma');
-  v_client1   BIGINT := (SELECT id FROM users WHERE email = 'client1@djajbladi.ma');
-  v_client2   BIGINT := (SELECT id FROM users WHERE email = 'client2@djajbladi.ma');
-  v_bat_a     BIGINT := (SELECT id FROM buildings WHERE name = 'Batiment A');
-  v_bat_b     BIGINT := (SELECT id FROM buildings WHERE name = 'Batiment B');
-  v_bat_c     BIGINT := (SELECT id FROM buildings WHERE name = 'Batiment C');
-  v_bat_d     BIGINT := (SELECT id FROM buildings WHERE name = 'Batiment D');
-  v_b1        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2024-001');
-  v_b2        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2024-002');
-  v_b3        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2024-003');
-  v_b4        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2024-004');
-  v_b5        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2025-001');
-  v_b6        BIGINT := (SELECT id FROM batches WHERE batch_number = 'LOT-2025-002');
-BEGIN
-
 -- Batch 1 (LOT-2024-001, Completed, 10000 poules) - 42 jours complets
 INSERT INTO feeding_records (batch_id, feed_type, quantity, feeding_date, notes, recorded_by_id, created_at, updated_at) VALUES
-(v_b1, 'Demarrage',   38.50, NOW()::DATE - INTERVAL '132 days', NULL, v_ouvrier1, NOW() - INTERVAL '132 days', NOW() - INTERVAL '132 days'),
+(1, 'Demarrage',   38.50, NOW()::DATE - INTERVAL '132 days', NULL, 2, NOW() - INTERVAL '132 days', NOW() - INTERVAL '132 days'),
 (1, 'Demarrage',   40.00, NOW()::DATE - INTERVAL '131 days', NULL, 2, NOW() - INTERVAL '131 days', NOW() - INTERVAL '131 days'),
 (1, 'Demarrage',   42.50, NOW()::DATE - INTERVAL '130 days', NULL, 2, NOW() - INTERVAL '130 days', NOW() - INTERVAL '130 days'),
 (1, 'Demarrage',   43.00, NOW()::DATE - INTERVAL '129 days', NULL, 2, NOW() - INTERVAL '129 days', NOW() - INTERVAL '129 days'),
