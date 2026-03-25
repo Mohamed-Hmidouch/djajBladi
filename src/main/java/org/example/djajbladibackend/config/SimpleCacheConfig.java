@@ -14,11 +14,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * In-memory cache when Redis is not used (profile "noredis").
+ * In-memory cache when Redis is not used (profile "noredis" or "ci").
  * Use on Koyeb etc. when REDIS_URL / Redis is not configured.
  */
 @Configuration
-@Profile("noredis")
+@Profile("noredis | ci")
 public class SimpleCacheConfig {
 
     @Bean

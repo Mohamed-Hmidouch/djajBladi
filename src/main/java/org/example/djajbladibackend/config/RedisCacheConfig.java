@@ -22,10 +22,10 @@ import java.util.Map;
 /**
  * Redis cache configuration.
  * First request hits the backend; subsequent requests with same key are served from Redis.
- * Disabled when profile "noredis" is active (use SimpleCacheConfig instead).
+ * Disabled when profile "noredis" or "ci" is active (use SimpleCacheConfig instead).
  */
 @Configuration
-@Profile("!noredis")
+@Profile("!noredis & !ci")
 public class RedisCacheConfig {
 
     public static final String CACHE_USERS = "users";
