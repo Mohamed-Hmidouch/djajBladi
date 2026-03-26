@@ -335,6 +335,79 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(BatchNotForSaleException.class)
+    public ProblemDetail handleBatchNotForSale(BatchNotForSaleException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Batch Not For Sale");
+        problemDetail.setProperty("batchId", ex.getBatchId());
+        problemDetail.setProperty("currentStatus", ex.getCurrentStatus());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Batch not for sale: batchId={}, status={}", ex.getBatchId(), ex.getCurrentStatus());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(OrderQuantityExceedsStockException.class)
+    public ProblemDetail handleOrderQuantityExceedsStock(OrderQuantityExceedsStockException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Order Quantity Exceeds Stock");
+        problemDetail.setProperty("batchId", ex.getBatchId());
+        problemDetail.setProperty("requested", ex.getRequested());
+        problemDetail.setProperty("available", ex.getAvailable());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Order exceeds stock: batchId={}, requested={}, available={}",
+            ex.getBatchId(), ex.getRequested(), ex.getAvailable());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(OrderNotCancellableException.class)
+    public ProblemDetail handleOrderNotCancellable(OrderNotCancellableException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Order Not Cancellable");
+        problemDetail.setProperty("orderId", ex.getOrderId());
+        problemDetail.setProperty("currentStatus", ex.getCurrentStatus());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Order not cancellable: orderId={}, status={}", ex.getOrderId(), ex.getCurrentStatus());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(OrderOwnershipException.class)
+    public ProblemDetail handleOrderOwnership(OrderOwnershipException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.FORBIDDEN,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Order Ownership Denied");
+        problemDetail.setProperty("orderId", ex.getOrderId());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Order ownership denied: orderId={}", ex.getOrderId());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(MinimumOrderQuantityException.class)
+    public ProblemDetail handleMinimumOrderQuantity(MinimumOrderQuantityException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage()
+        );
+        problemDetail.setTitle("Minimum Order Quantity Not Met");
+        problemDetail.setProperty("batchId", ex.getBatchId());
+        problemDetail.setProperty("requested", ex.getRequested());
+        problemDetail.setProperty("minimum", ex.getMinimum());
+        problemDetail.setProperty("timestamp", Instant.now());
+        log.warn("Min order quantity not met: batchId={}, requested={}, minimum={}",
+            ex.getBatchId(), ex.getRequested(), ex.getMinimum());
+        return problemDetail;
+    }
+
     @ExceptionHandler(DuplicateVaccinationProtocolException.class)
     public ProblemDetail handleDuplicateVaccinationProtocol(DuplicateVaccinationProtocolException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(

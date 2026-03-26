@@ -99,4 +99,15 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     @Query("SELECT b FROM Batch b LEFT JOIN FETCH b.createdBy LEFT JOIN FETCH b.assignedTo LEFT JOIN FETCH b.building WHERE b.status IN :statuses ORDER BY b.createdAt DESC")
     List<Batch>  findByStatusInWithRelations(@Param("statuses") java.util.List<org.example.djajbladibackend.models.BatchStatus> statuses);
+
+    /**
+     * Lots disponibles a la vente pour les clients (READY_FOR_SALE avec stock > 0 et prix defini).
+     */
+    @Query("SELECT b FROM Batch b " +
+            "LEFT JOIN FETCH b.building " +
+            "WHERE b.status = 'READY_FOR_SALE' " +
+            "AND b.currentCount > 0 " +
+            "AND b.sellingPricePerUnit IS NOT NULL " +
+            "ORDER BY b.arrivalDate DESC")
+    List<Batch> findAvailableForSale();
 }

@@ -82,4 +82,50 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     @Query("SELECT COALESCE(SUM(s.totalPrice), 0) FROM Sale s " +
             "WHERE s.batch.id = :batchId AND s.paymentStatus != 'Cancelled'")
     java.math.BigDecimal sumRevenuByBatchId(@Param("batchId") Long batchId);
+
+    /**
+     * Commandes d'un client triees par date decroissante.
+     */
+    @Query("SELECT s FROM Sale s " +
+            "LEFT JOIN FETCH s.batch " +
+            "LEFT JOIN FETCH s.client " +
+            "LEFT JOIN FETCH s.recordedBy " +
+            "WHERE s.client.id = :clientId " +
+            "ORDER BY s.createdAt DESC")
+    List<Sale> findByClientIdOrderByCreatedAtDesc(@Param("clientId") Long clientId);
+
+    /**
+     * Total depense par un client (commandes payees uniquement).
+     */
+    @Query("SELECT COALESCE(SUM(s.totalPrice), 0) FROM Sale s " +
+            "WHERE s.client.id = :clientId AND s.paymentStatus = 'Paid'")
+    java.math.BigDecimal sumTotalSpentByClientId(@Param("clientId") Long clientId);
+
+    /**
+     * Total en attente de paiement pour un client.
+     */
+    @Query("SELECT COALESCE(SUM(s.totalPrice), 0) FROM Sale s " +
+            "WHERE s.client.id = :clientId AND s.paymentStatus = 'Pending'")
+    java.math.BigDecimal sumPendingAmountByClientId(@Param("clientId") Long clientId);
+
+    /**
+     * Nombre total de poulets achetes par un client (hors annulees).
+     */
+    @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Sale s " +
+            "WHERE s.client.id = :clientId AND s.paymentStatus != 'Cancelled'")
+    int sumQuantityByClientId(@Param("clientId") Long clientId);
+
+    /**
+     * Nombre de commandes par statut pour un client.
+     */
+    @Query("SELECT COUNT(s) FROM Sale s WHERE s.client.id = :clientId AND s.paymentStatus = :status")
+    long countByClientIdAndPaymentStatus(@Param("clientId") Long clientId, @Param("status") PaymentStatus status);
+
+    /**
+     * Quantite totale deja vendue (non annulee) pour un lot.
+     * Utile pour calculer le stock restant disponible a la vente.
+     */
+    @Query("SELECT COALESCE(SUM(s.quantity), 0) FROM Sale s " +
+            "WHERE s.batch.id = :batchId AND s.paymentStatus != 'Cancelled'")
+    int sumSoldQuantityByBatchId(@Param("batchId") Long batchId);
 }

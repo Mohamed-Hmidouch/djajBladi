@@ -56,6 +56,13 @@ public class Batch {
     @Column(name = "purchase_price", precision = 10, scale = 2)
     private BigDecimal purchasePrice;
 
+    @Column(name = "selling_price_per_unit", precision = 10, scale = 2)
+    private BigDecimal sellingPricePerUnit;
+
+    @Builder.Default
+    @Column(name = "minimum_order_quantity")
+    private Integer minimumOrderQuantity = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
     private Building building;
@@ -128,6 +135,14 @@ public class Batch {
 
     public boolean isArchived() {
         return status == BatchStatus.Archived;
+    }
+
+    public boolean isReadyForSale() {
+        return status == BatchStatus.READY_FOR_SALE;
+    }
+
+    public boolean isSold() {
+        return status == BatchStatus.SOLD;
     }
 
     public void addFeedingRecord(FeedingRecord feedingRecord) {
