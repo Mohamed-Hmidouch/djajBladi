@@ -1,5 +1,6 @@
-# CI Pipeline: Test + Coverage + Build Docker Image
-# Runs on every push/PR to main
+# CI Pipeline: Test + Coverage -> Build + Push Docker Image
+# Order: test & coverage -> docker build & push to Docker Hub
+# Deploy (deploy-azure.yml) triggers automatically after this CI passes
 
 name: CI
 
@@ -50,7 +51,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/djaj_bladi
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
-          JWT_SECRET: ci-test-jwt-secret-that-is-long-enough-for-hmac-sha256-algorithm-validation
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: ./mvnw -B verify --file pom.xml
 
       - name: Upload test reports
@@ -85,7 +86,6 @@ jobs:
         run: |
           if [ -f target/site/jacoco/jacoco.xml ]; then
             echo "--- JaCoCo Coverage Summary ---"
-            grep -oP '(?<=<counter type="LINE" missed=")[0-9]+(?=" covered=")[0-9]+' target/site/jacoco/jacoco.xml || true
             python3 - <<'EOF'
           import xml.etree.ElementTree as ET
           tree = ET.parse("target/site/jacoco/jacoco.xml")
@@ -103,10 +103,12 @@ jobs:
           fi
 
   # ------------------------------------------------------------------ #
-  # 2) Build Docker image (proves the JAR + Dockerfile are valid)       #
+  # 2) Build Docker image and push to Docker Hub                        #
+  #    Runs only after test & coverage passes                           #
+  #    Push only on main branch pushes (skipped on PRs)                #
   # ------------------------------------------------------------------ #
-  docker-build:
-    name: Docker Build
+  docker-build-push:
+    name: Docker Build & Push
     runs-on: ubuntu-latest
     needs: test
 
@@ -117,11 +119,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          tags: djaj-bladi-app:${{ github.sha }}
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/djaj-bladi-backend:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/djaj-bladi-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -2,11 +2,13 @@
 # Triggers ONLY after CI workflow passes on main, or manually
 #
 # Required GitHub Secrets:
-#   AZURE_VM_HOST: IP or hostname of Azure VM
-#   AZURE_VM_USER: SSH username
-#   AZURE_VM_SSH_KEY: Private SSH key for authentication
-#   POSTGRES_PASSWORD: Production database password
-#   JWT_SECRET: Production JWT signing secret
+#   AZURE_VM_HOST     : IP or hostname of Azure VM
+#   AZURE_VM_USER     : SSH username
+#   AZURE_VM_SSH_KEY  : Private SSH key for authentication
+#   DOCKER_HUB_USERNAME : Docker Hub username (to pull the image)
+#   DOCKER_HUB_TOKEN    : Docker Hub token (to pull private images)
+#   POSTGRES_PASSWORD : Production database password
+#   JWT_SECRET        : Production JWT signing secret
 
 name: Deploy to Azure VM
 
@@ -28,23 +30,36 @@ jobs:
     steps:
       - name: Deploy to Azure VM
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.AZURE_VM_HOST }}
           username: ${{ secrets.AZURE_VM_USER }}
           key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          envs: DOCKER_HUB_USERNAME,DOCKER_HUB_TOKEN,POSTGRES_PASSWORD,JWT_SECRET
           script: |
             cd /opt/djaj-bladi/app
             git pull origin main
 
-            # Create .env from GitHub secrets
-            echo "POSTGRES_USER=postgres" > .env
-            echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            # Write .env using printf - secrets are passed as env vars,
+            # never interpolated into the script string (no shell history leak)
+            printf 'POSTGRES_USER=postgres\nPOSTGRES_PASSWORD=%s\nJWT_SECRET=%s\n' \
+              "$POSTGRES_PASSWORD" "$JWT_SECRET" > .env
+            chmod 600 .env
 
-            # Rebuild and restart containers
+            # Log in to Docker Hub and pull the pre-built image
+            echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+
+            # Pull latest image and restart containers (no on-VM rebuild)
+            docker compose -f compose.prod.yaml pull
             docker compose -f compose.prod.yaml down
-            docker compose -f compose.prod.yaml up -d --build
+            docker compose -f compose.prod.yaml up -d
 
-            # Show status
+            docker logout
+
+            # Show final status
             docker compose -f compose.prod.yaml ps
             echo "Deployment complete"
