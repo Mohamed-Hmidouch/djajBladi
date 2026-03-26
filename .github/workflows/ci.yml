@@ -51,7 +51,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/djaj_bladi
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-only-jwt-secret-not-used-in-production-must-be-at-least-64-chars-long' }}
         run: ./mvnw -B verify --file pom.xml
 
       - name: Upload test reports
