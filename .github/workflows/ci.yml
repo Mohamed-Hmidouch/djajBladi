@@ -162,7 +162,7 @@ jobs:
           envs: DOCKER_HUB_USERNAME,DOCKER_HUB_TOKEN,POSTGRES_PASSWORD,JWT_SECRET
           script: |
             set -e
-            cd ~/app
+            cd /opt/djaj-bladi
 
             # Pull latest compose file from repo
             git pull origin main
