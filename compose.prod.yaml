@@ -1,12 +1,11 @@
 # Production stack for Azure VM deployment
-# ✅ All data persisted to host directories - survives container restarts/rebuilds
-# Run: docker compose -f compose.prod.yaml up -d --build
+# Image is pulled from Docker Hub by CI/CD pipeline - no local build needed
+# Run: docker compose -f compose.prod.yaml up -d
 # API: http://<AZURE_VM_IP>:8080
 
 services:
   app:
-    build: .
-    image: djaj-bladi-app:latest
+    image: ${DOCKER_IMAGE:-mohamedhmidouch/djaj-bladi-backend:latest}
     container_name: djaj-bladi-app
     environment:
       # Database - internal Docker network

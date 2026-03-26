@@ -1,6 +1,6 @@
-# CI Pipeline: Test + Coverage -> Build + Push Docker Image
-# Order: test & coverage -> docker build & push to Docker Hub
-# Deploy (deploy-azure.yml) triggers automatically after this CI passes
+# CI/CD Pipeline: Test + Coverage -> Build + Push -> Deploy
+# Single pipeline, 3 jobs in sequence via needs:
+#   test -> docker-build-push -> deploy (main push only)
 
 name: CI
 
@@ -51,7 +51,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/djaj_bladi
           SPRING_DATASOURCE_USERNAME: postgres
           SPRING_DATASOURCE_PASSWORD: postgres
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-only-jwt-secret-not-used-in-production-must-be-at-least-64-chars-long' }}
+          JWT_SECRET: ci-only-jwt-secret-not-used-in-production-must-be-at-least-64-chars-long
         run: ./mvnw -B verify --file pom.xml
 
       - name: Upload test reports
@@ -135,3 +135,52 @@ jobs:
             ${{ secrets.DOCKER_HUB_USERNAME }}/djaj-bladi-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ------------------------------------------------------------------ #
+  # 3) Deploy to Azure VM via SSH                                       #
+  #    Runs only after docker-build-push succeeds AND on main push only #
+  #    Pulls pre-built image from Docker Hub - no rebuild on VM         #
+  # ------------------------------------------------------------------ #
+  deploy:
+    name: Deploy to Azure VM
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+          envs: DOCKER_HUB_USERNAME,DOCKER_HUB_TOKEN,POSTGRES_PASSWORD,JWT_SECRET
+          script: |
+            set -e
+            cd ~/app
+
+            # Pull latest compose file from repo
+            git pull origin main
+
+            # Write .env securely: secrets arrive as env vars, never in the script string
+            printf 'POSTGRES_USER=postgres\nPOSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nDOCKER_IMAGE=%s/djaj-bladi-backend:latest\n' \
+              "$POSTGRES_PASSWORD" "$JWT_SECRET" "$DOCKER_HUB_USERNAME" > .env
+            chmod 600 .env
+
+            # Pull pre-built image from Docker Hub
+            echo "$DOCKER_HUB_TOKEN" | docker login -u "$DOCKER_HUB_USERNAME" --password-stdin
+            docker compose -f compose.prod.yaml pull
+
+            # Zero-downtime-ish restart
+            docker compose -f compose.prod.yaml down
+            docker compose -f compose.prod.yaml up -d
+
+            docker logout
+
+            docker compose -f compose.prod.yaml ps
+            echo "Deployment complete"
