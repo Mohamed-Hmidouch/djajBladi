@@ -80,23 +80,23 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Long
      * Returns health records for a batch that still have an active withdrawal period today.
      * Only non-vaccination records with withdrawalDays > 0 where today < examinationDate + withdrawalDays.
      */
-    @Query("SELECT h FROM HealthRecord h " +
-            "WHERE h.batch.id = :batchId " +
-            "AND h.withdrawalDays IS NOT NULL " +
-            "AND h.withdrawalDays > 0 " +
-            "AND h.isVaccination = false " +
-            "AND FUNCTION('ADDDATE', h.examinationDate, h.withdrawalDays) > CURRENT_DATE")
+    @Query(value = "SELECT h.* FROM health_records h " +
+            "WHERE h.batch_id = :batchId " +
+            "AND h.withdrawal_days IS NOT NULL " +
+            "AND h.withdrawal_days > 0 " +
+            "AND h.is_vaccination = false " +
+            "AND (h.examination_date + h.withdrawal_days) > CURRENT_DATE", nativeQuery = true)
     List<HealthRecord> findActiveWithdrawalPeriods(@Param("batchId") Long batchId);
 
     /**
      * Returns the latest withdrawal expiration date across all non-vaccination health records for a batch.
      */
-    @Query("SELECT MAX(FUNCTION('ADDDATE', h.examinationDate, h.withdrawalDays)) " +
-            "FROM HealthRecord h " +
-            "WHERE h.batch.id = :batchId " +
-            "AND h.withdrawalDays IS NOT NULL " +
-            "AND h.withdrawalDays > 0 " +
-            "AND h.isVaccination = false")
+    @Query(value = "SELECT MAX(h.examination_date + h.withdrawal_days) " +
+            "FROM health_records h " +
+            "WHERE h.batch_id = :batchId " +
+            "AND h.withdrawal_days IS NOT NULL " +
+            "AND h.withdrawal_days > 0 " +
+            "AND h.is_vaccination = false", nativeQuery = true)
     java.time.LocalDate findLatestWithdrawalExpiration(@Param("batchId") Long batchId);
 
     /**
