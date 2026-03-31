@@ -43,9 +43,9 @@ public class GlobalExceptionHandler {
 
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            "Validation failed"
+            "Les données saisies sont invalides. Veuillez corriger les erreurs ci-dessous."
         );
-        problemDetail.setTitle("Validation Error");
+        problemDetail.setTitle("Erreur de validation");
         problemDetail.setProperty("errors", errors);
         problemDetail.setProperty("timestamp", Instant.now());
         
@@ -57,9 +57,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleBadCredentials(BadCredentialsException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.UNAUTHORIZED,
-            "Invalid email or password"
+            "Email ou mot de passe incorrect."
         );
-        problemDetail.setTitle("Authentication Failed");
+        problemDetail.setTitle("Échec d'authentification");
         problemDetail.setProperty("timestamp", Instant.now());
         
         log.error("Bad credentials: {}", ex.getMessage());
@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
             HttpStatus.NOT_FOUND,
             ex.getMessage()
         );
-        problemDetail.setTitle("Resource Not Found");
+        problemDetail.setTitle("Ressource introuvable");
         problemDetail.setProperty("timestamp", Instant.now());
         
         log.error("Resource not found: {}", ex.getMessage());
@@ -82,10 +82,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RegistrationNotAllowedException.class)
     public ProblemDetail handleRegistrationNotAllowed(RegistrationNotAllowedException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.FORBIDDEN,
             ex.getMessage()
         );
-        problemDetail.setTitle("Registration Not Allowed");
+        problemDetail.setTitle("Inscription non autorisée");
         problemDetail.setProperty("timestamp", Instant.now());
         
         log.warn("Registration not allowed: {}", ex.getMessage());
@@ -98,7 +98,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Invalid Role");
+        problemDetail.setTitle("Rôle invalide");
         problemDetail.setProperty("timestamp", Instant.now());
         
         log.warn("Invalid role for admin user creation: {}", ex.getMessage());
@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Duplicate Batch Number");
+        problemDetail.setTitle("Numéro de lot en double");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Duplicate batch number: {}", ex.getMessage());
         return problemDetail;
@@ -120,10 +120,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Email Already Exists");
+        problemDetail.setTitle("Email déjà utilisé");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Email already exists: {}", ex.getMessage());
         return problemDetail;
@@ -135,7 +135,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Duplicate Daily Mortality");
+        problemDetail.setTitle("Mortalité déjà enregistrée");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Duplicate daily mortality: {}", ex.getMessage());
         return problemDetail;
@@ -144,10 +144,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HealthRecordNotPendingException.class)
     public ProblemDetail handleHealthRecordNotPending(HealthRecordNotPendingException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Health Record Not Pending");
+        problemDetail.setTitle("Rapport de santé non en attente");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Health record not pending: {}", ex.getMessage());
         return problemDetail;
@@ -159,7 +159,7 @@ public class GlobalExceptionHandler {
             HttpStatus.FORBIDDEN,
             ex.getMessage()
         );
-        problemDetail.setTitle("Forbidden");
+        problemDetail.setTitle("Accès refusé");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Forbidden role: {}", ex.getMessage());
         return problemDetail;
@@ -171,7 +171,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Bad Request");
+        problemDetail.setTitle("Requête invalide");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Invalid argument: {}", ex.getMessage());
         return problemDetail;
@@ -180,10 +180,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BatchNotActiveException.class)
     public ProblemDetail handleBatchNotActive(BatchNotActiveException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
+            HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Batch Not Active");
+        problemDetail.setTitle("Lot non actif");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Batch not active: {}", ex.getMessage());
         return problemDetail;
@@ -195,7 +195,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Mortality Exceeds Batch Size");
+        problemDetail.setTitle("Mortalité dépasse la taille du lot");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Mortality exceeds batch size: {}", ex.getMessage());
         return problemDetail;
@@ -207,7 +207,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Date Range Too Large");
+        problemDetail.setTitle("Plage de dates trop grande");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Date range too large: {}", ex.getMessage());
         return problemDetail;
@@ -219,7 +219,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Invalid Data");
+        problemDetail.setTitle("Données invalides");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Invalid data: {}", ex.getMessage());
         return problemDetail;
@@ -228,10 +228,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         String detail = ex.getCause() instanceof JsonProcessingException
-                ? "Malformed JSON. Check request body format and field types."
-                : "Request body could not be read or parsed.";
+                ? "Le format des données envoyées est incorrect. Vérifiez les champs et réessayez."
+                : "Le corps de la requête n'a pas pu être lu. Vérifiez le format des données.";
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
-        problemDetail.setTitle("Malformed Request");
+        problemDetail.setTitle("Requête malformée");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Malformed request: {}", ex.getMessage());
         return problemDetail;
@@ -241,9 +241,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMissingParam(MissingServletRequestParameterException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            "Required parameter '" + ex.getParameterName() + "' is missing"
+            "Le paramètre '" + ex.getParameterName() + "' est obligatoire et n'a pas été fourni."
         );
-        problemDetail.setTitle("Missing Parameter");
+        problemDetail.setTitle("Paramètre manquant");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Missing parameter: {}", ex.getParameterName());
         return problemDetail;
@@ -259,9 +259,9 @@ public class GlobalExceptionHandler {
                 ));
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_REQUEST,
-            "Validation failed for request parameters"
+            "Les paramètres de la requête sont invalides."
         );
-        problemDetail.setTitle("Parameter Validation Error");
+        problemDetail.setTitle("Erreur de validation des paramètres");
         problemDetail.setProperty("errors", errors);
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Constraint violation: {}", errors);
@@ -270,10 +270,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String detail = "Parameter '" + ex.getName() + "' has invalid value. Expected type: " +
-                (ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown");
+        String detail = "Le paramètre '" + ex.getName() + "' a une valeur invalide. Type attendu : " +
+                (ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "inconnu");
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
-        problemDetail.setTitle("Invalid Parameter Type");
+        problemDetail.setTitle("Type de paramètre invalide");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Type mismatch: {} = {}", ex.getName(), ex.getValue());
         return problemDetail;
@@ -283,9 +283,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.METHOD_NOT_ALLOWED,
-            "HTTP method " + ex.getMethod() + " is not supported for this endpoint"
+            "La méthode HTTP " + ex.getMethod() + " n'est pas supportée pour cette action."
         );
-        problemDetail.setTitle("Method Not Allowed");
+        problemDetail.setTitle("Méthode non autorisée");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Method not allowed: {}", ex.getMethod());
         return problemDetail;
@@ -295,9 +295,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-            "Content-Type " + ex.getContentType() + " is not supported. Use application/json."
+            "Le format " + ex.getContentType() + " n'est pas supporté. Utilisez application/json."
         );
-        problemDetail.setTitle("Unsupported Media Type");
+        problemDetail.setTitle("Format non supporté");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Unsupported media type: {}", ex.getContentType());
         return problemDetail;
@@ -309,7 +309,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Insufficient Stock");
+        problemDetail.setTitle("Stock insuffisant");
         problemDetail.setProperty("stockItemId", ex.getStockItemId());
         problemDetail.setProperty("stockItemName", ex.getStockItemName());
         problemDetail.setProperty("availableKg", ex.getAvailable());
@@ -326,7 +326,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Withdrawal Period Active");
+        problemDetail.setTitle("Période de retrait en cours");
         problemDetail.setProperty("batchId", ex.getBatchId());
         problemDetail.setProperty("expirationDate", ex.getExpirationDate());
         problemDetail.setProperty("timestamp", Instant.now());
@@ -341,7 +341,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Batch Not For Sale");
+        problemDetail.setTitle("Lot non disponible à la vente");
         problemDetail.setProperty("batchId", ex.getBatchId());
         problemDetail.setProperty("currentStatus", ex.getCurrentStatus());
         problemDetail.setProperty("timestamp", Instant.now());
@@ -355,7 +355,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Order Quantity Exceeds Stock");
+        problemDetail.setTitle("Quantité commandée supérieure au stock");
         problemDetail.setProperty("batchId", ex.getBatchId());
         problemDetail.setProperty("requested", ex.getRequested());
         problemDetail.setProperty("available", ex.getAvailable());
@@ -371,7 +371,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Order Not Cancellable");
+        problemDetail.setTitle("Commande non annulable");
         problemDetail.setProperty("orderId", ex.getOrderId());
         problemDetail.setProperty("currentStatus", ex.getCurrentStatus());
         problemDetail.setProperty("timestamp", Instant.now());
@@ -385,7 +385,7 @@ public class GlobalExceptionHandler {
             HttpStatus.FORBIDDEN,
             ex.getMessage()
         );
-        problemDetail.setTitle("Order Ownership Denied");
+        problemDetail.setTitle("Accès refusé à cette commande");
         problemDetail.setProperty("orderId", ex.getOrderId());
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Order ownership denied: orderId={}", ex.getOrderId());
@@ -398,7 +398,7 @@ public class GlobalExceptionHandler {
             HttpStatus.BAD_REQUEST,
             ex.getMessage()
         );
-        problemDetail.setTitle("Minimum Order Quantity Not Met");
+        problemDetail.setTitle("Quantité minimale non atteinte");
         problemDetail.setProperty("batchId", ex.getBatchId());
         problemDetail.setProperty("requested", ex.getRequested());
         problemDetail.setProperty("minimum", ex.getMinimum());
@@ -414,7 +414,7 @@ public class GlobalExceptionHandler {
             HttpStatus.CONFLICT,
             ex.getMessage()
         );
-        problemDetail.setTitle("Duplicate Vaccination Protocol");
+        problemDetail.setTitle("Protocole de vaccination en double");
         problemDetail.setProperty("strain", ex.getStrain());
         problemDetail.setProperty("vaccineName", ex.getVaccineName());
         problemDetail.setProperty("dayOfLife", ex.getDayOfLife());
@@ -428,10 +428,10 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String message = ex.getMessage();
         String detail = message != null && (message.contains("unique") || message.contains("duplicate"))
-                ? "Duplicate or conflicting data. The record may already exist."
-                : "Data integrity constraint violated.";
+                ? "Un enregistrement identique existe déjà. Veuillez vérifier les données."
+                : "Les données sont en conflit avec les enregistrements existants.";
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, detail);
-        problemDetail.setTitle("Data Integrity Violation");
+        problemDetail.setTitle("Conflit de données");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("Data integrity violation: {}", ex.getMessage());
         return problemDetail;
@@ -441,9 +441,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleNotFound(NoHandlerFoundException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.NOT_FOUND,
-            "No endpoint found for " + ex.getHttpMethod() + " " + ex.getRequestURL()
+            "Aucune ressource trouvée pour " + ex.getHttpMethod() + " " + ex.getRequestURL()
         );
-        problemDetail.setTitle("Not Found");
+        problemDetail.setTitle("Page introuvable");
         problemDetail.setProperty("timestamp", Instant.now());
         log.warn("No handler: {} {}", ex.getHttpMethod(), ex.getRequestURL());
         return problemDetail;
@@ -453,9 +453,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleGenericException(Exception ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
+            "Une erreur interne est survenue. Veuillez réessayer plus tard."
         );
-        problemDetail.setTitle("Internal Server Error");
+        problemDetail.setTitle("Erreur interne du serveur");
         problemDetail.setProperty("timestamp", Instant.now());
         
         log.error("Unexpected error", ex);

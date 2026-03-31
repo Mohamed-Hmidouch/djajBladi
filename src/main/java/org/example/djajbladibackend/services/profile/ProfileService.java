@@ -34,7 +34,7 @@ public class ProfileService {
     @Transactional
     public UserResponse updateProfile(String email, UpdateProfileRequest req) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
 
         if (req.getFullName() != null && !req.getFullName().trim().isEmpty()) {
             user.setFullName(req.getFullName().trim());
@@ -55,13 +55,13 @@ public class ProfileService {
     @Transactional
     public void changePassword(String email, ChangePasswordRequest req) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
 
         if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPasswordHash())) {
-            throw new InvalidDataException("Current password is incorrect");
+            throw new InvalidDataException("Le mot de passe actuel est incorrect.");
         }
         if (req.getCurrentPassword().equals(req.getNewPassword())) {
-            throw new InvalidDataException("New password must be different from current password");
+            throw new InvalidDataException("Le nouveau mot de passe doit être différent du mot de passe actuel.");
         }
 
         user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));

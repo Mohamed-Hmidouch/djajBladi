@@ -13,7 +13,7 @@ public class DuplicateVaccinationProtocolException extends RuntimeException {
 
     public DuplicateVaccinationProtocolException(String strain, String vaccineName, Integer dayOfLife) {
         super(String.format(
-            "Vaccination protocol already exists for strain='%s', vaccine='%s', dayOfLife=%d",
+            "Un protocole de vaccination existe déjà pour la souche '%s', vaccin '%s', jour %d.",
             strain, vaccineName, dayOfLife
         ));
         this.strain = strain;

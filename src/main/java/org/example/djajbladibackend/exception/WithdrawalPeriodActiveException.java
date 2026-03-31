@@ -14,7 +14,7 @@ public class WithdrawalPeriodActiveException extends RuntimeException {
 
     public WithdrawalPeriodActiveException(Long batchId, LocalDate expirationDate) {
         super(String.format(
-            "Batch %d has an active withdrawal period. Cannot sell until %s.",
+            "Le lot %d est en période de retrait. Vente impossible avant le %s.",
             batchId, expirationDate
         ));
         this.batchId = batchId;

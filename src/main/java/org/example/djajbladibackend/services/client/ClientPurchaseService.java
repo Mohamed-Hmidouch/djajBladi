@@ -111,7 +111,7 @@ public class ClientPurchaseService {
     @Transactional
     public PurchaseOrderResponse placeOrder(PurchaseOrderRequest request, String clientEmail) {
         User client = userRepository.findByEmail(clientEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + clientEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + clientEmail));
 
         Batch batch = batchRepository.findByIdWithCreatedByAndBuilding(request.getBatchId())
                 .orElseThrow(() -> new ResourceNotFoundException("Batch", "id", request.getBatchId()));
@@ -347,7 +347,7 @@ public class ClientPurchaseService {
 
     private User findClient(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
     }
 
     private boolean isWithdrawalClear(Long batchId) {

@@ -5,6 +5,7 @@ import org.example.djajbladibackend.dto.auth.JwtResponse;
 import org.example.djajbladibackend.dto.auth.LoginRequest;
 import org.example.djajbladibackend.dto.auth.RegisterRequest;
 import org.example.djajbladibackend.dto.user.UserResponse;
+import org.example.djajbladibackend.exception.EmailAlreadyExistsException;
 import org.example.djajbladibackend.services.auth.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,9 +36,9 @@ public class AuthController {
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         
         if (authService.emailExists(registerRequest.getEmail())) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+            throw new EmailAlreadyExistsException(
+                "Un compte avec l'adresse " + registerRequest.getEmail() + " existe déjà."
+            );
         }
 
         UserResponse userResponse = authService.register(registerRequest);

@@ -55,27 +55,27 @@ public class DailyMortalityService {
     @Transactional
     public DailyMortalityResponse record(DailyMortalityRequest req, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userEmail));
         if (user.getRole() != RoleEnum.Ouvrier && user.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Ouvrier or Admin can record daily mortality");
+            throw new ForbiddenRoleException("Seul un ouvrier ou un administrateur peut enregistrer la mortalité.");
         }
         if (req.getRecordDate().isAfter(LocalDate.now())) {
-            throw new InvalidDataException("Record date cannot be in the future");
+            throw new InvalidDataException("La date d'enregistrement ne peut pas être dans le futur.");
         }
         if (req.getMortalityCount() == null || req.getMortalityCount() < 0) {
-            throw new InvalidDataException("Mortality count must be >= 0");
+            throw new InvalidDataException("Le nombre de mortalités doit être supérieur ou égal à 0.");
         }
         Batch batch = batchRepository.findById(req.getBatchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + req.getBatchId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Lot introuvable : " + req.getBatchId()));
         if (batch.getStatus() != org.example.djajbladibackend.models.BatchStatus.Active) {
-            throw new BatchNotActiveException("Mortality can only be recorded for active batches. Current status: " + batch.getStatus());
+            throw new BatchNotActiveException("La mortalité ne peut être enregistrée que pour les lots actifs. Statut actuel : " + batch.getStatus());
         }
         if (req.getMortalityCount() > batch.getChickenCount()) {
-            throw new MortalityExceedsBatchSizeException("Mortality count (" + req.getMortalityCount() + ") cannot exceed batch size (" + batch.getChickenCount() + ")");
+            throw new MortalityExceedsBatchSizeException("Le nombre de mortalités (" + req.getMortalityCount() + ") ne peut pas dépasser la taille du lot (" + batch.getChickenCount() + ").");
         }
         if (mortalityRepository.existsByBatchIdAndRecordDate(batch.getId(), req.getRecordDate())) {
             throw new DuplicateDailyMortalityException(
-                    "Mortality already recorded for batch " + batch.getBatchNumber() + " on " + req.getRecordDate());
+                    "La mortalité est déjà enregistrée pour le lot " + batch.getBatchNumber() + " à la date du " + req.getRecordDate() + ".");
         }
 
         DailyMortalityRecord record = DailyMortalityRecord.builder()
@@ -94,20 +94,20 @@ public class DailyMortalityService {
     @Transactional
     public DailyMortalityResponse update(Long id, DailyMortalityRequest req, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userEmail));
         if (user.getRole() != RoleEnum.Ouvrier && user.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Ouvrier or Admin can update daily mortality");
+            throw new ForbiddenRoleException("Seul un ouvrier ou un administrateur peut modifier la mortalité.");
         }
         DailyMortalityRecord record = mortalityRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Daily mortality record not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Enregistrement de mortalité introuvable : " + id));
         if (req.getRecordDate().isAfter(LocalDate.now())) {
-            throw new InvalidDataException("Record date cannot be in the future");
+            throw new InvalidDataException("La date d'enregistrement ne peut pas être dans le futur.");
         }
         if (req.getMortalityCount() == null || req.getMortalityCount() < 0) {
-            throw new InvalidDataException("Mortality count must be >= 0");
+            throw new InvalidDataException("Le nombre de mortalités doit être supérieur ou égal à 0.");
         }
         if (req.getMortalityCount() > record.getBatch().getChickenCount()) {
-            throw new MortalityExceedsBatchSizeException("Mortality count (" + req.getMortalityCount() + ") cannot exceed batch size (" + record.getBatch().getChickenCount() + ")");
+            throw new MortalityExceedsBatchSizeException("Le nombre de mortalités (" + req.getMortalityCount() + ") ne peut pas dépasser la taille du lot (" + record.getBatch().getChickenCount() + ").");
         }
 
         record.setRecordDate(req.getRecordDate());
@@ -120,10 +120,10 @@ public class DailyMortalityService {
 
     public List<DailyMortalityResponse> findByDateRange(LocalDate start, LocalDate end, Long batchId) {
         if (start.isAfter(end)) {
-            throw new InvalidDataException("Start date must be before or equal to end date");
+            throw new InvalidDataException("La date de début doit être antérieure ou égale à la date de fin.");
         }
         if (java.time.temporal.ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
-            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+            throw new DateRangeTooLargeException("La plage de dates ne peut pas dépasser " + maxDateRangeDays + " jours.");
         }
         List<DailyMortalityRecord> records;
         if (batchId != null) {
@@ -136,10 +136,10 @@ public class DailyMortalityService {
 
     public PageResponse<DailyMortalityResponse> findByDateRangePaged(LocalDate start, LocalDate end, Long batchId, int page, int size) {
         if (start.isAfter(end)) {
-            throw new InvalidDataException("Start date must be before or equal to end date");
+            throw new InvalidDataException("La date de début doit être antérieure ou égale à la date de fin.");
         }
         if (java.time.temporal.ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
-            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+            throw new DateRangeTooLargeException("La plage de dates ne peut pas dépasser " + maxDateRangeDays + " jours.");
         }
         var pageable = PageRequest.of(page, size);
         if (batchId != null) {
@@ -162,16 +162,16 @@ public class DailyMortalityService {
     @Transactional
     public void decrementStock(Long batchId, Integer mortalityCount, LocalDate recordDate, Long healthRecordId) {
         if (mortalityCount == null || mortalityCount <= 0) {
-            throw new InvalidDataException("Mortality count must be > 0");
+            throw new InvalidDataException("Le nombre de mortalités doit être supérieur à 0.");
         }
         Batch batch = batchRepository.findById(batchId)
-                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + batchId));
+                .orElseThrow(() -> new ResourceNotFoundException("Lot introuvable : " + batchId));
 
         int affected = batchRepository.decrementCurrentCount(batchId, mortalityCount);
         if (affected == 0) {
             throw new MortalityExceedsBatchSizeException(
-                    "Cannot decrement batch " + batchId + " by " + mortalityCount +
-                    ": current count is insufficient");
+                    "Impossible de décrémenter le lot " + batchId + " de " + mortalityCount +
+                    " : l'effectif actuel est insuffisant.");
         }
 
         User systemUser = batch.getAssignedTo();

@@ -43,18 +43,18 @@ public class AdminUserService {
     @Transactional
     public UserResponse createUser(CreateUserRequest req, String adminEmail) {
         userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'email : " + adminEmail));
 
         if (req.getRole() == RoleEnum.Client) {
             throw new InvalidRoleForAdminCreationException(
-                    "Client cannot be created via this endpoint. Clients self-register. Use Admin, Ouvrier or Veterinaire.");
+                    "Le rôle Client ne peut pas être créé via cette interface. Les clients s'inscrivent eux-mêmes.");
         }
         if (req.getRole() != RoleEnum.Admin && req.getRole() != RoleEnum.Ouvrier && req.getRole() != RoleEnum.Veterinaire) {
             throw new InvalidRoleForAdminCreationException(
-                    "Invalid role. Use Admin, Ouvrier or Veterinaire. Received: " + req.getRole());
+                    "Rôle invalide. Utilisez Admin, Ouvrier ou Vétérinaire. Reçu : " + req.getRole());
         }
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException("Un compte avec cette adresse email existe déjà.");
         }
 
         String fullName = req.getFirstName() + " " + req.getLastName();
@@ -62,7 +62,7 @@ public class AdminUserService {
             case Admin -> userFactory.createAdmin(fullName, req.getEmail(), req.getPassword());
             case Ouvrier -> userFactory.createWorker(fullName, req.getEmail(), req.getPassword());
             case Veterinaire -> userFactory.createVeterinarian(fullName, req.getEmail(), req.getPassword());
-            default -> throw new InvalidRoleForAdminCreationException("Unsupported role: " + req.getRole());
+            default -> throw new InvalidRoleForAdminCreationException("Rôle non supporté : " + req.getRole());
         };
         if (req.getPhoneNumber() != null) {
             user.setPhoneNumber(req.getPhoneNumber());
@@ -81,10 +81,10 @@ public class AdminUserService {
     @Transactional
     public void adminForceChangePassword(Long targetUserId, AdminChangePasswordRequest req, String adminEmail) {
         userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Administrateur introuvable : " + adminEmail));
 
         User target = userRepository.findById(targetUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + targetUserId));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'id : " + targetUserId));
 
         target.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         userRepository.save(target);
@@ -95,7 +95,7 @@ public class AdminUserService {
 
     public PageResponse<UserResponse> getAllUsers(String adminEmail, int page, int size) {
         userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'email : " + adminEmail));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<UserResponse> result = userRepository.findAll(pageable)

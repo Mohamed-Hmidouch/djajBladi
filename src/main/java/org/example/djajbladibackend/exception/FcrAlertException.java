@@ -11,7 +11,7 @@ public class FcrAlertException extends RuntimeException {
     private final double threshold;
 
     public FcrAlertException(Long batchId, double fcrValue, double threshold) {
-        super(String.format("FCR alert for batch %d: FCR=%.3f exceeds threshold=%.2f", batchId, fcrValue, threshold));
+        super(String.format("Alerte ICR pour le lot %d : ICR=%.3f dépasse le seuil de %.2f.", batchId, fcrValue, threshold));
         this.batchId = batchId;
         this.fcrValue = fcrValue;
         this.threshold = threshold;

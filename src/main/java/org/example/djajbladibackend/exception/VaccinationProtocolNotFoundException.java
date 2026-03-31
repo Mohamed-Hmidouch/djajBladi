@@ -11,6 +11,6 @@ public class VaccinationProtocolNotFoundException extends ResourceNotFoundExcept
     }
 
     public VaccinationProtocolNotFoundException(String strain, String vaccineName) {
-        super(String.format("Vaccination protocol not found for strain='%s', vaccine='%s'", strain, vaccineName));
+        super(String.format("Protocole de vaccination introuvable pour la souche '%s', vaccin '%s'.", strain, vaccineName));
     }
 }

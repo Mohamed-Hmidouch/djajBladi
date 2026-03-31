@@ -62,15 +62,15 @@ public class SupervisionDashboardService {
 
     public SupervisionDashboardResponse getDashboard(LocalDate startDate, LocalDate endDate, String adminEmail) {
         User admin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + adminEmail));
         if (admin.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Admin can access the supervision dashboard");
+            throw new ForbiddenRoleException("Seul l'administrateur peut accéder au tableau de supervision.");
         }
         if (startDate.isAfter(endDate)) {
-            throw new InvalidDataException("Start date must be before or equal to end date");
+            throw new InvalidDataException("La date de début doit être antérieure ou égale à la date de fin.");
         }
         if (ChronoUnit.DAYS.between(startDate, endDate) > maxDateRangeDays) {
-            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+            throw new DateRangeTooLargeException("La plage de dates ne peut pas dépasser " + maxDateRangeDays + " jours.");
         }
 
         var feedingRecords = feedingRepository.findByFeedingDateBetweenWithRelations(startDate, endDate);

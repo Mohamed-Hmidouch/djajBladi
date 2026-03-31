@@ -70,26 +70,26 @@ public class FeedingRecordService {
     public FeedingRecordResponse create(FeedingRecordRequest req, String userEmail) {
         // --- Validation role ---
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userEmail));
         if (user.getRole() != RoleEnum.Ouvrier && user.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Ouvrier or Admin can create feeding records");
+            throw new ForbiddenRoleException("Seul un ouvrier ou un administrateur peut enregistrer une distribution d'aliment.");
         }
 
         // --- Validation metier ---
         if (req.getFeedingDate().isAfter(LocalDate.now())) {
-            throw new InvalidDataException("Feeding date cannot be in the future");
+            throw new InvalidDataException("La date de distribution ne peut pas être dans le futur.");
         }
         if (req.getFeedType() == null || req.getFeedType().trim().isEmpty()) {
-            throw new InvalidDataException("Feed type is required and cannot be blank");
+            throw new InvalidDataException("Le type d'aliment est obligatoire.");
         }
         if (req.getQuantity() == null || req.getQuantity().signum() <= 0) {
-            throw new InvalidDataException("Quantity must be greater than 0");
+            throw new InvalidDataException("La quantité doit être supérieure à 0.");
         }
 
         Batch batch = batchRepository.findById(req.getBatchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + req.getBatchId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Lot introuvable : " + req.getBatchId()));
         if (batch.getStatus() != BatchStatus.Active) {
-            throw new BatchNotActiveException("Feeding can only be recorded for active batches. Status: " + batch.getStatus());
+            throw new BatchNotActiveException("L'alimentation ne peut être enregistrée que pour les lots actifs. Statut actuel : " + batch.getStatus());
         }
 
         // --- Tracabilite stock obligatoire ---
@@ -97,7 +97,7 @@ public class FeedingRecordService {
         // -> toute autre transaction voulant modifier ce StockItem sera bloquee
         // jusqu'a la fin de cette transaction (commit ou rollback)
         StockItem stockItem = stockItemRepository.findByIdForUpdate(req.getStockItemId())
-                .orElseThrow(() -> new ResourceNotFoundException("Stock item not found: " + req.getStockItemId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Article de stock introuvable : " + req.getStockItemId()));
 
         // --- Verification disponibilite (en kg) ---
         BigDecimal requested = req.getQuantity();
@@ -138,10 +138,10 @@ public class FeedingRecordService {
 
     public List<FeedingRecordResponse> findByDateRange(LocalDate start, LocalDate end, Long batchId) {
         if (start.isAfter(end)) {
-            throw new InvalidDataException("Start date must be before or equal to end date");
+            throw new InvalidDataException("La date de début doit être antérieure ou égale à la date de fin.");
         }
         if (ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
-            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+            throw new DateRangeTooLargeException("La plage de dates ne peut pas dépasser " + maxDateRangeDays + " jours.");
         }
         List<FeedingRecord> records;
         if (batchId != null) {
@@ -154,10 +154,10 @@ public class FeedingRecordService {
 
     public PageResponse<FeedingRecordResponse> findByDateRangePaged(LocalDate start, LocalDate end, Long batchId, int page, int size) {
         if (start.isAfter(end)) {
-            throw new InvalidDataException("Start date must be before or equal to end date");
+            throw new InvalidDataException("La date de début doit être antérieure ou égale à la date de fin.");
         }
         if (ChronoUnit.DAYS.between(start, end) > maxDateRangeDays) {
-            throw new DateRangeTooLargeException("Date range cannot exceed " + maxDateRangeDays + " days");
+            throw new DateRangeTooLargeException("La plage de dates ne peut pas dépasser " + maxDateRangeDays + " jours.");
         }
         var pageable = PageRequest.of(page, size);
         if (batchId != null) {

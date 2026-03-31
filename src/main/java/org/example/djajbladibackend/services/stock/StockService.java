@@ -71,7 +71,7 @@ public class StockService {
      */
     public boolean isAvailable(Long stockItemId, BigDecimal quantity) {
         if (quantity == null || quantity.signum() <= 0) {
-            throw new InvalidDataException("Quantity must be > 0");
+            throw new InvalidDataException("La quantité doit être supérieure à 0.");
         }
         StockItem item = stockItemRepository.findById(stockItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("StockItem", "id", stockItemId));
@@ -94,7 +94,7 @@ public class StockService {
     @Transactional
     public void deductQuantity(Long stockItemId, BigDecimal quantity) {
         if (quantity == null || quantity.signum() <= 0) {
-            throw new InvalidDataException("Quantity must be > 0");
+            throw new InvalidDataException("La quantité doit être supérieure à 0.");
         }
         StockItem item = stockItemRepository.findByIdForUpdate(stockItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("StockItem", "id", stockItemId));

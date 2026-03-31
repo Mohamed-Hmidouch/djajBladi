@@ -52,7 +52,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("POST /api/auth/register with role Admin should return 400 (registration not allowed)")
+    @DisplayName("POST /api/auth/register with role Admin should return 403 (registration not allowed)")
     void testRegister_Admin_Rejected_BadRequest() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setFirstName("Admin");
@@ -65,12 +65,12 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post(AUTH_BASE_URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @Order(2)
-    @DisplayName("POST /api/auth/register with role Ouvrier should return 400 (only Client can self-register)")
+    @DisplayName("POST /api/auth/register with role Ouvrier should return 403 (only Client can self-register)")
     void testRegister_Ouvrier_Rejected_BadRequest() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setFirstName("Ouvrier");
@@ -83,7 +83,7 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(post(AUTH_BASE_URL + "/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isForbidden());
     }
 
     @Test

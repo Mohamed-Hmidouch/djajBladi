@@ -51,7 +51,7 @@ public class VaccinationProtocolService {
             throw new DuplicateVaccinationProtocolException(req.getStrain(), req.getVaccineName(), req.getDayOfLife());
         }
         var createdBy = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + adminEmail));
 
         VaccinationProtocol protocol = VaccinationProtocol.builder()
                 .strain(req.getStrain().trim())

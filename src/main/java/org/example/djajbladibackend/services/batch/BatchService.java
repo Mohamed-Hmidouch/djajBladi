@@ -46,10 +46,10 @@ public class BatchService {
     @Transactional
     public BatchResponse create(BatchCreateRequest req, String adminEmail) {
         if (batchRepository.existsByBatchNumber(req.getBatchNumber())) {
-            throw new DuplicateBatchNumberException("Batch number already exists: " + req.getBatchNumber());
+            throw new DuplicateBatchNumberException("Le numéro de lot existe déjà : " + req.getBatchNumber());
         }
         var createdBy = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'email : " + adminEmail));
         Building building = null;
         if (req.getBuildingId() != null) {
             building = buildingRepository.findById(req.getBuildingId())
@@ -125,7 +125,7 @@ public class BatchService {
 
     public PageResponse<BatchResponse> findByAssignedUserEmail(String email, int page, int size) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + email));
         return findByAssignedUser(user.getId(), page, size);
     }
 

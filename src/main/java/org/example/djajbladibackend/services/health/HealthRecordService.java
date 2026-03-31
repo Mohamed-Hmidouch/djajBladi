@@ -64,28 +64,28 @@ public class HealthRecordService {
     @Transactional
     public HealthRecordResponse create(HealthRecordCreateRequest req, String userEmail) {
         User vet = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userEmail));
         if (vet.getRole() != RoleEnum.Veterinaire && vet.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Veterinaire or Admin can create health records");
+            throw new ForbiddenRoleException("Seul un vétérinaire ou un administrateur peut créer un rapport de santé.");
         }
         if (req.getExaminationDate().isAfter(LocalDate.now())) {
-            throw new InvalidDataException("Examination date cannot be in the future");
+            throw new InvalidDataException("La date d'examen ne peut pas être dans le futur.");
         }
         if (req.getMortalityCount() != null && req.getMortalityCount() < 0) {
-            throw new InvalidDataException("Mortality count must be >= 0");
+            throw new InvalidDataException("Le nombre de mortalités doit être supérieur ou égal à 0.");
         }
         if (req.getTreatmentCost() != null && req.getTreatmentCost().signum() < 0) {
-            throw new InvalidDataException("Treatment cost cannot be negative");
+            throw new InvalidDataException("Le coût du traitement ne peut pas être négatif.");
         }
 
         // Validate stock-related fields: stockItemId requires quantityUsed > 0
         if (req.getStockItemId() != null) {
             if (req.getQuantityUsed() == null || req.getQuantityUsed().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new InvalidDataException("quantityUsed must be > 0 when stockItemId is provided");
+                throw new InvalidDataException("La quantité utilisée doit être supérieure à 0 lorsqu'un article de stock est sélectionné.");
             }
             // Cannot specify both stockItemId (price auto-calculated) and manual treatmentCost
             if (req.getTreatmentCost() != null) {
-                throw new InvalidDataException("Cannot specify both stockItemId and treatmentCost. The cost is auto-calculated from stock.");
+                throw new InvalidDataException("Impossible de spécifier à la fois un article de stock et un coût de traitement. Le coût est calculé automatiquement.");
             }
             if (!stockService.isAvailable(req.getStockItemId(), req.getQuantityUsed())) {
                 StockItem item = stockItemRepository.findById(req.getStockItemId())
@@ -100,9 +100,9 @@ public class HealthRecordService {
         }
 
         Batch batch = batchRepository.findById(req.getBatchId())
-                .orElseThrow(() -> new ResourceNotFoundException("Batch not found: " + req.getBatchId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Lot introuvable : " + req.getBatchId()));
         if (batch.getStatus() != BatchStatus.Active) {
-            throw new BatchNotActiveException("Health records can only be created for active batches. Current status: " + batch.getStatus());
+            throw new BatchNotActiveException("Les rapports de santé ne peuvent être créés que pour les lots actifs. Statut actuel : " + batch.getStatus());
         }
 
         StockItem stockItem = null;
@@ -152,17 +152,17 @@ public class HealthRecordService {
     @Transactional
     public HealthRecordResponse approve(Long id, String adminEmail) {
         User admin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + adminEmail));
         if (admin.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Admin can approve health records");
+            throw new ForbiddenRoleException("Seul l'administrateur peut approuver les rapports de santé.");
         }
         HealthRecord record = healthRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Health record not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rapport de santé introuvable : " + id));
         if (!Boolean.TRUE.equals(record.getRequiresApproval())) {
-            throw new HealthRecordNotPendingException("This health record does not require approval");
+            throw new HealthRecordNotPendingException("Ce rapport de santé ne nécessite pas d'approbation.");
         }
         if (record.getApprovalStatus() != ApprovalStatus.PENDING_APPROVAL) {
-            throw new HealthRecordNotPendingException("Health record is not pending approval. Status: " + record.getApprovalStatus());
+            throw new HealthRecordNotPendingException("Ce rapport n'est pas en attente d'approbation. Statut actuel : " + record.getApprovalStatus());
         }
 
         // Deduct stock on approval and auto-calculate treatment cost
@@ -187,17 +187,17 @@ public class HealthRecordService {
     @Transactional
     public HealthRecordResponse reject(Long id, String adminEmail) {
         User admin = userRepository.findByEmail(adminEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + adminEmail));
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + adminEmail));
         if (admin.getRole() != RoleEnum.Admin) {
-            throw new ForbiddenRoleException("Only Admin can reject health records");
+            throw new ForbiddenRoleException("Seul l'administrateur peut rejeter les rapports de santé.");
         }
         HealthRecord record = healthRepository.findByIdWithRelations(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Health record not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Rapport de santé introuvable : " + id));
         if (!Boolean.TRUE.equals(record.getRequiresApproval())) {
-            throw new HealthRecordNotPendingException("This health record does not require approval");
+            throw new HealthRecordNotPendingException("Ce rapport de santé ne nécessite pas d'approbation.");
         }
         if (record.getApprovalStatus() != ApprovalStatus.PENDING_APPROVAL) {
-            throw new HealthRecordNotPendingException("Health record is not pending approval. Status: " + record.getApprovalStatus());
+            throw new HealthRecordNotPendingException("Ce rapport n'est pas en attente d'approbation. Statut actuel : " + record.getApprovalStatus());
         }
 
         record.setApprovalStatus(ApprovalStatus.REJECTED);

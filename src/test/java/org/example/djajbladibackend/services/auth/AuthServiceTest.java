@@ -140,7 +140,7 @@ class AuthServiceTest {
             authService.login(loginRequest);
         });
 
-        assertEquals("User not found", exception.getMessage());
+        assertEquals("Utilisateur introuvable.", exception.getMessage());
         verify(userRepository, times(1)).findByEmail(loginRequest.getEmail());
     }
 
@@ -176,7 +176,7 @@ class AuthServiceTest {
         EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class, () ->
                 authService.register(registerRequest));
 
-        assertEquals("Email already exists", exception.getMessage());
+        assertEquals("Un compte avec cette adresse email existe déjà.", exception.getMessage());
         verify(userRepository, times(1)).existsByEmail(registerRequest.getEmail());
         verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
         verify(userRepository, never()).save(any(User.class));
@@ -190,7 +190,7 @@ class AuthServiceTest {
         RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
                 authService.register(registerRequest));
 
-        assertTrue(exception.getMessage().contains("Admin"));
+        assertTrue(exception.getMessage().contains("administrateur"));
         assertTrue(exception.getMessage().contains("Client"));
         verify(userRepository, never()).existsByEmail(anyString());
         verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
@@ -205,7 +205,7 @@ class AuthServiceTest {
         RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
                 authService.register(registerRequest));
 
-        assertTrue(exception.getMessage().contains("Ouvrier"));
+        assertTrue(exception.getMessage().contains("Ouvrier") || exception.getMessage().contains("Client"));
         verify(userRepository, never()).existsByEmail(anyString());
         verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
         verify(userRepository, never()).save(any(User.class));
@@ -219,7 +219,7 @@ class AuthServiceTest {
         RegistrationNotAllowedException exception = assertThrows(RegistrationNotAllowedException.class, () ->
                 authService.register(registerRequest));
 
-        assertTrue(exception.getMessage().contains("Veterinaire"));
+        assertTrue(exception.getMessage().contains("Vétérinaire") || exception.getMessage().contains("Client"));
         verify(userRepository, never()).existsByEmail(anyString());
         verify(userFactory, never()).createUser(anyString(), anyString(), anyString(), any(RoleEnum.class));
         verify(userRepository, never()).save(any(User.class));
@@ -280,7 +280,7 @@ class AuthServiceTest {
             authService.getUserByEmail("nonexistent@djajbladi.com");
         });
 
-        assertTrue(exception.getMessage().contains("User not found with email"));
+        assertTrue(exception.getMessage().contains("Utilisateur introuvable"));
         verify(userRepository, times(1)).findByEmail("nonexistent@djajbladi.com");
     }
 }

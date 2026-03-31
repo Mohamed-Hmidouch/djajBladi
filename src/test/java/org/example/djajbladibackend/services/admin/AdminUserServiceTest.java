@@ -180,7 +180,7 @@ class AdminUserServiceTest {
         InvalidRoleForAdminCreationException ex = assertThrows(InvalidRoleForAdminCreationException.class, () ->
                 adminUserService.createUser(createRequest, "admin@djajbladi.com"));
         assertTrue(ex.getMessage().contains("Client"));
-        assertTrue(ex.getMessage().contains("self-register"));
+        assertTrue(ex.getMessage().contains("s'inscrivent"));
         verify(userRepository, never()).save(any(User.class));
     }
 
@@ -192,7 +192,7 @@ class AdminUserServiceTest {
 
         EmailAlreadyExistsException ex = assertThrows(EmailAlreadyExistsException.class, () ->
                 adminUserService.createUser(createRequest, "admin@djajbladi.com"));
-        assertEquals("Email already exists", ex.getMessage());
+        assertEquals("Un compte avec cette adresse email existe déjà.", ex.getMessage());
         verify(userFactory, never()).createWorker(anyString(), anyString(), anyString());
         verify(userRepository, never()).save(any(User.class));
     }

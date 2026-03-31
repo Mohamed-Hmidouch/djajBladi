@@ -64,7 +64,7 @@ public class AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable."));
 
         String role = user.getRole().name();
         String jwt = jwtUtils.generateJwtToken(authentication, role);
@@ -88,11 +88,11 @@ public class AuthService {
         RoleEnum role = registerRequest.getRole() != null ? registerRequest.getRole() : RoleEnum.Client;
         if (role != RoleEnum.Client) {
             throw new RegistrationNotAllowedException(
-                "Only Client role can self-register. Admin, Ouvrier and Veterinaire are created by an admin."
+                "Seul le rôle Client peut s'inscrire. Les comptes Admin, Ouvrier et Vétérinaire sont créés par un administrateur."
             );
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException("Un compte avec cette adresse email existe déjà.");
         }
 
         // ✅ Utiliser UserFactory pour créer l'utilisateur (always Client)
@@ -137,7 +137,7 @@ public class AuthService {
     @Cacheable(cacheNames = CACHE_USERS, key = "#email")
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'email : " + email));
     }
 
     /**
